@@ -1,0 +1,1920 @@
+{
+  "id": "ciPQfEhogXLJBC4u",
+  "name": "Autonomous customer support agent with multi-KB RAG, web search fallback and human escalation",
+  "description": null,
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "324edf20-c926-44b4-8b98-628a16ef0338",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "236659c6-5eb8-47bc-93e0-a3e5f80e09fc",
+      "name": "Receive Support Request",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        304
+      ],
+      "webhookId": "324edf20-c926-44b4-8b98-628a16ef0338"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "auth-condition",
+              "leftValue": "={{ $json.headers['x-api-key'] }}",
+              "rightValue": "YOUR_SUPPORT_API_KEY",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "73c89393-3b68-43ba-b47b-eab4d98f8598",
+      "name": "Validate API Key",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        288,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ error: 'Unauthorized', message: 'Valid x-api-key header required' }) }}",
+        "options": {}
+      },
+      "id": "3f5e4575-fabe-4972-8ace-02bd86686f5c",
+      "name": "Return 401 Unauthorized",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        288,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ {\n  message: $json.body.message,\n  session_id: $json.body.session_id || $json.body.sessionId || 'default',\n  message_id: $json.body.message_id || $json.body.messageId || ($json.body.session_id + '-' + Date.now()),\n  channel: $json.body.channel || 'webhook',\n  callback_url: $json.body.callback_url || '',\n  customer_email: $json.body.customer_email || $json.body.email || '',\n  slack_channel: $json.body.slack_channel || $json.body.channel_id || '',\n  timestamp: $now\n} }}",
+        "options": {}
+      },
+      "id": "0212d09f-dac9-4f1f-a218-b018e7434eb5",
+      "name": "Normalise Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        624,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "support_rate_limits",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "session_id",
+              "fieldValue": "={{ $json.session_id }}"
+            }
+          ]
+        }
+      },
+      "id": "055c25e5-a607-40bd-b651-95425195390f",
+      "name": "Log Request Timestamp",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        912,
+        304
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "support_rate_limits",
+        "limit": 20,
+        "filterType": "string"
+      },
+      "id": "8ce5af1d-9843-463c-97d3-f3d0c8a68104",
+      "name": "Count Recent Requests",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        304
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "rate-condition",
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 10,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ca0dac5b-3282-462f-829a-93e78e02f27e",
+      "name": "Check Rate Limit",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1472,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ error: 'Too Many Requests', message: 'Rate limit exceeded. Maximum 10 requests per minute per session.' }) }}",
+        "options": {}
+      },
+      "id": "a1091754-f99f-400e-b4f1-bef0078711c4",
+      "name": "Return 429 Too Many Requests",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1472,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "empty-cond",
+              "leftValue": "={{ $json.message }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "69fd5ee8-1e9d-4fa9-8424-6e2c8e89c279",
+      "name": "Check Message Body",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1808,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ error: 'Bad Request', message: 'message field is required and cannot be empty' }) }}",
+        "options": {}
+      },
+      "id": "1b37d356-0529-4946-af23-120a6b51453f",
+      "name": "Return 400 Empty Message",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1808,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "support_message_ids",
+        "limit": 1,
+        "filterType": "string"
+      },
+      "id": "0bbb4e72-ba18-4c66-8cc5-fa767516288e",
+      "name": "Look Up Message ID",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        304
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "dedup-cond",
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ddebebb7-c96f-4295-90bd-4a93280d2a75",
+      "name": "Check If Already Processed",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2368,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'already_processed', message_id: $json.message_id }) }}",
+        "options": {}
+      },
+      "id": "117a23af-9a37-4a23-a466-522cc84c1ab5",
+      "name": "Return 200 Already Processed",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2368,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "support_message_ids",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "message_id",
+              "fieldValue": "={{ $json.message_id }}"
+            }
+          ]
+        }
+      },
+      "id": "926284e3-a107-45ae-90c5-bbee71ca9561",
+      "name": "Register Message ID",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2640,
+        304
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "len-cond",
+              "leftValue": "={{ $('Normalise Request').item.json.message.length }}",
+              "rightValue": 2000,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b78aa9d7-27c6-4d3a-8adc-321fad9b52c4",
+      "name": "Check Message Length",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2928,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ error: 'Bad Request', message: 'Message exceeds 2000 character limit' }) }}",
+        "options": {}
+      },
+      "id": "ed87143c-d995-4eb0-8a0a-85742384f66b",
+      "name": "Return 400 Message Too Long",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2928,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "handover-cond",
+              "leftValue": "={{ $('Normalise Request').item.json.message }}",
+              "rightValue": "speak to a human|talk to agent|human please|real person|talk to someone|human support",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "04a672ab-2830-4047-95bf-2c5396631967",
+      "name": "Detect Handover Request",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3200,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = items[0].json;\nconst piiPatterns = [\n  { regex: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/g, tag: '[EMAIL]' },\n  { regex: /(\\+?1?\\s?)?(\\(?\\d{3}\\)?[\\s.-]?)(\\d{3}[\\s.-]?\\d{4})/g, tag: '[PHONE]' },\n  { regex: /\\b\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}\\b/g, tag: '[CARD]' }\n];\nlet sanitized = msg.message;\npiiPatterns.forEach(p => { sanitized = sanitized.replace(p.regex, p.tag); });\nconst handoverKeywords = ['speak to a human', 'talk to agent', 'human please', 'real person', 'talk to someone'];\nconst explicit_handover = handoverKeywords.some(kw => msg.message.toLowerCase().includes(kw));\nreturn [{ json: { ...msg, sanitized_query: sanitized, explicit_handover }, pairedItem: { item: 0 } }];"
+      },
+      "id": "6343cf82-93a0-4110-9bf4-ef4c5044f7f1",
+      "name": "Sanitise Query and Flag PII",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3552,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"status\":\"accepted\",\"message\":\"Your request is being processed\"}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "id": "ff1449b4-aaf1-4481-986b-ad87890356ae",
+      "name": "Acknowledge Request",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        3552,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are an autonomous customer support agent with access to multiple knowledge bases and web search.\n\nFor every question:\n1. Search the most relevant knowledge base tool(s) first \u2014 use tool descriptions to decide which\n2. If the knowledge base returns no useful results, use the Web Search tool\n3. If you find a good answer: respond clearly and cite your source\n4. If you cannot find a reliable answer from any source: say so honestly\n\nAlways respond in this exact JSON format \u2014 no other text, no markdown, just the JSON:\n{\n  \"answer\": \"Your response to the customer. Append a source line: [Source: Primary Knowledge Base] or [Source: Web Search]\",\n  \"confidence\": \"high\",\n  \"sources\": [\"Primary Knowledge Base\"],\n  \"kb_miss\": false\n}\n\nConfidence rules:\n- \"high\": clear specific answer found in knowledge base\n- \"medium\": partial answer, or had to use web search\n- \"low\": no reliable answer found, or answer is uncertain\n\nSet kb_miss to true if no knowledge base returned useful content (web search was the only source, or nothing worked).\nNever guess. Never fabricate. If unsure, set confidence to \"low\"."
+        }
+      },
+      "id": "791b2124-9938-4772-b98e-723a079418e6",
+      "name": "RAG Support Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        4112,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "model": "qwen2.5:7b",
+        "options": {}
+      },
+      "id": "90bd90d6-7459-4539-a4e9-2e67fff373aa",
+      "name": "Select Language Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        3872,
+        672
+      ]
+    },
+    {
+      "parameters": {
+        "model": "nomic-embed-text"
+      },
+      "id": "2c8fd400-2542-4339-af80-62f29cf0ac04",
+      "name": "Generate Embeddings",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        4352,
+        672
+      ]
+    },
+    {
+      "parameters": {
+        "sessionKey": "={{ $('Normalise Request').first().json.session_id }}",
+        "contextWindowLength": 10
+      },
+      "id": "8bd13337-9150-46a9-aff2-f54449f9689f",
+      "name": "Load Conversation Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.4,
+      "position": [
+        4112,
+        672
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Search the primary knowledge base for answers about core products, pricing, features, and common issues.",
+        "tableName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_PRIMARY_KB_TABLE"
+        },
+        "topK": 5,
+        "options": {
+          "queryName": "Search Primary Knowledge Base"
+        }
+      },
+      "id": "538d1e39-a903-4910-8da5-4d387461462a",
+      "name": "Search Primary Knowledge Base",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        3872,
+        880
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Search the secondary knowledge base for answers about policies, billing, account management, and troubleshooting guides.",
+        "tableName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SECONDARY_KB_TABLE"
+        },
+        "topK": 5,
+        "options": {
+          "queryName": "Search Secondary Knowledge Base"
+        }
+      },
+      "id": "f25a861a-98e2-4874-aa4a-18feb177e2bd",
+      "name": "Search Secondary Knowledge Base",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        4112,
+        880
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Search the reference knowledge base for technical documentation, API references, and advanced configuration guides.",
+        "tableName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_REFERENCE_KB_TABLE"
+        },
+        "topK": 5,
+        "options": {
+          "queryName": "Search Reference Knowledge Base"
+        }
+      },
+      "id": "d967d9b0-72db-4e9c-9735-65deb85b9ff3",
+      "name": "Search Reference Knowledge Base",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        4352,
+        880
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "ff533494-56dc-455a-a122-e6dd27627dbc",
+      "name": "Search Web",
+      "type": "@n8n/n8n-nodes-langchain.toolWikipedia",
+      "typeVersion": 1,
+      "position": [
+        4592,
+        880
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = items[0].json.output || items[0].json.text || '';\nlet parsed;\ntry {\n  const jsonMatch = raw.match(/\\{[\\s\\S]*\\}/);\n  parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);\n} catch (e) {\n  parsed = { answer: raw, confidence: 'low', sources: [], kb_miss: true };\n}\nif (!['high','medium','low'].includes(parsed.confidence)) parsed.confidence = 'low';\nreturn [{ json: { ...items[0].json, ...parsed }, pairedItem: { item: 0 } }];"
+      },
+      "id": "4ad2f4f4-f5e2-4569-8ed1-a026565f098e",
+      "name": "Extract Confidence and Sources",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4944,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "conf-cond",
+              "leftValue": "={{ $json.confidence }}",
+              "rightValue": "low",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "9a86f58f-3e7f-423e-aada-f2d7f44f597c",
+      "name": "Route by Confidence",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        5232,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const piiPatterns = [\n  { regex: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/g, tag: '[EMAIL]' },\n  { regex: /(\\+?1?\\s?)?(\\(?\\d{3}\\)?[\\s.-]?)(\\d{3}[\\s.-]?\\d{4})/g, tag: '[PHONE]' },\n  { regex: /\\b\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}\\b/g, tag: '[CARD]' }\n];\nlet answer = items[0].json.answer || '';\npiiPatterns.forEach(p => { answer = answer.replace(p.regex, p.tag); });\nreturn [{ json: { ...items[0].json, scrubbed_answer: answer }, pairedItem: { item: 0 } }];"
+      },
+      "id": "b56f2cbc-5e45-44e5-926c-06be5a3fb922",
+      "name": "Scrub PII from Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5568,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "support_audit_log",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "session_id",
+              "fieldValue": "={{ $('Normalise Request').first().json.session_id }}"
+            },
+            {
+              "fieldId": "question",
+              "fieldValue": "={{ $('Normalise Request').first().json.message }}"
+            },
+            {
+              "fieldId": "answer",
+              "fieldValue": "={{ $json.scrubbed_answer }}"
+            },
+            {
+              "fieldId": "sources",
+              "fieldValue": "={{ JSON.stringify($json.sources || []) }}"
+            },
+            {
+              "fieldId": "confidence",
+              "fieldValue": "={{ $json.confidence }}"
+            },
+            {
+              "fieldId": "escalated",
+              "fieldValue": "false"
+            },
+            {
+              "fieldId": "channel",
+              "fieldValue": "={{ $('Normalise Request').first().json.channel }}"
+            }
+          ]
+        }
+      },
+      "id": "560a7008-c21b-46a1-a1b9-b7d449b638d3",
+      "name": "Write to Audit Log",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        5840,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "slack-cond",
+                    "leftValue": "={{ $('Normalise Request').first().json.channel }}",
+                    "rightValue": "slack",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "email-cond",
+                    "leftValue": "={{ $('Normalise Request').first().json.channel }}",
+                    "rightValue": "email",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "fcbce3f5-4311-46d4-a6ac-ebf0559bc777",
+      "name": "Route by Channel",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        6128,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Normalise Request').first().json.slack_channel || 'YOUR_SLACK_CHANNEL_ID' }}"
+        },
+        "text": "={{ $json.scrubbed_answer }}",
+        "otherOptions": {}
+      },
+      "id": "c4729817-5788-48bf-ac6d-b7727c4714ae",
+      "name": "Send Answer via Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        6400,
+        144
+      ],
+      "webhookId": "d7ece768-b833-43b2-af31-75cdd404c94d"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Normalise Request').first().json.customer_email }}",
+        "subject": "=Re: Support Request \u2014 {{ $('Normalise Request').first().json.session_id }}",
+        "message": "={{ $json.scrubbed_answer }}",
+        "options": {}
+      },
+      "id": "0a82dcc8-43e4-4bfa-a5cf-af3898fb44de",
+      "name": "Send Answer via Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        6400,
+        304
+      ],
+      "webhookId": "4639d452-2262-4704-9860-8b06e96248fc"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Normalise Request').first().json.callback_url }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ answer: $json.scrubbed_answer, session_id: $('Normalise Request').first().json.session_id, confidence: $json.confidence, sources: $json.sources }) }}",
+        "options": {}
+      },
+      "id": "df0a5a78-ba3f-4d5e-a72c-35a9cc788382",
+      "name": "Send Answer via Callback",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        6400,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "kb-miss-cond",
+              "leftValue": "={{ $json.kb_miss }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "36004c85-ce4a-4980-8fef-5bc42e755588",
+      "name": "Check for Knowledge Base Miss",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4944,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "support_kb_gaps",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "question",
+              "fieldValue": "={{ $('Normalise Request').first().json.message }}"
+            },
+            {
+              "fieldId": "session_id",
+              "fieldValue": "={{ $('Normalise Request').first().json.session_id }}"
+            },
+            {
+              "fieldId": "channel",
+              "fieldValue": "={{ $('Normalise Request').first().json.channel }}"
+            }
+          ]
+        }
+      },
+      "id": "c0e754a6-79c4-4ad1-b4f6-41801498b562",
+      "name": "Log Knowledge Base Gap",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        5232,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const req = $('Normalise Request').first().json;\nconst out = items[0].json;\nconst hasAgentConfidence = out.confidence && ['high','medium','low'].includes(out.confidence);\nreturn [{\n  json: {\n    session_id: req.session_id,\n    question: req.message,\n    agent_answer: out.answer ?? 'Customer requested human assistance',\n    confidence: out.confidence ?? 'n/a',\n    reason: hasAgentConfidence ? 'low_confidence' : 'customer_requested',\n    channel: req.channel\n  },\n  pairedItem: { item: 0 }\n}];"
+      },
+      "id": "6fd1e5b0-d65c-44c3-9194-8518fc988dc1",
+      "name": "Build Escalation Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5568,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "support_escalations",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "session_id",
+              "fieldValue": "={{ $json.session_id }}"
+            },
+            {
+              "fieldId": "question",
+              "fieldValue": "={{ $json.question }}"
+            },
+            {
+              "fieldId": "agent_answer",
+              "fieldValue": "={{ $json.agent_answer }}"
+            },
+            {
+              "fieldId": "confidence",
+              "fieldValue": "={{ $json.confidence }}"
+            },
+            {
+              "fieldId": "reason",
+              "fieldValue": "={{ $json.reason }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "pending"
+            },
+            {
+              "fieldId": "channel",
+              "fieldValue": "={{ $json.channel }}"
+            }
+          ]
+        }
+      },
+      "id": "f2e942a4-65c9-47d3-8462-07a7fdaac1de",
+      "name": "Queue Escalation",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        5840,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nreturn [{ json: { ...items[0].json, utcHour: now.getUTCHours() }, pairedItem: { item: 0 } }];"
+      },
+      "id": "42abd708-5689-41db-800a-d44df211ce79",
+      "name": "Get Current Time",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6128,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "bh-start",
+              "leftValue": "={{ $json.utcHour }}",
+              "rightValue": 9,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "bh-end",
+              "leftValue": "={{ $json.utcHour }}",
+              "rightValue": 17,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3ab87f33-254c-4343-8eea-c1245f5890e8",
+      "name": "Check Business Hours",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        6400,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_ESCALATION_SLACK_CHANNEL"
+        },
+        "text": "=\ud83d\udea8 *Escalation Required*\n*Session:* {{ $json.session_id }}\n*Reason:* {{ $json.reason }}\n*Confidence:* {{ $json.confidence }}\n*Question:* {{ $json.question }}\n*Agent answer:* {{ $json.agent_answer }}",
+        "otherOptions": {}
+      },
+      "id": "f51123a7-b56f-44f6-91b4-21207880368b",
+      "name": "Send Escalation Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        6688,
+        720
+      ],
+      "webhookId": "880a5472-07d0-441d-bfe2-c237c3afbf12",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "support_escalations",
+        "filterType": "string",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "queued_off_hours"
+            }
+          ]
+        }
+      },
+      "id": "b1043a74-5d8d-486a-b859-be4028d2e98e",
+      "name": "Mark as Off-Hours",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        6688,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR_ONCALL_EMAIL",
+        "subject": "=[Off-Hours Escalation] Support request from session {{ $json.session_id }}",
+        "message": "=<p><strong>Escalation queued (off-hours)</strong></p><p><strong>Session:</strong> {{ $json.session_id }}<br><strong>Reason:</strong> {{ $json.reason }}<br><strong>Question:</strong> {{ $json.question }}<br><strong>Agent answer:</strong> {{ $json.agent_answer }}</p><p>This request will be processed at the start of business hours.</p>",
+        "options": {}
+      },
+      "id": "2ed5aa4a-5cf1-4be1-b3a1-7d63fe87acd5",
+      "name": "Send Escalation Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        6960,
+        944
+      ],
+      "webhookId": "7a7ffa00-5e37-4d47-b169-b567d0246980"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "support_escalations",
+        "limit": 100,
+        "filterType": "string"
+      },
+      "id": "689ebe9c-fc63-4c3f-9af9-8b13ff70e340",
+      "name": "Count Recent Escalations",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        5840,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "rate-spike-cond",
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 5,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8b6a9ecd-d121-4194-bb70-3a8201a679f6",
+      "name": "Check Escalation Rate",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        6128,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_OPS_SLACK_CHANNEL"
+        },
+        "text": "=\u26a0\ufe0f *Escalation Rate Spike*\n{{ $input.all().length }} escalations in the last 60 minutes (threshold: 5).\nCheck your Supabase dashboard for details.",
+        "otherOptions": {}
+      },
+      "id": "b9758030-157d-4948-9cb6-ffc1ac4764a9",
+      "name": "Send Operator Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        6400,
+        944
+      ],
+      "webhookId": "fc66d9f5-0b91-4b5d-bd95-cbc7c92b0d1b",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {},
+      "id": "15885b44-3cda-4f56-8abd-061764f48b90",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const exec = items[0].json;\nreturn [{\n  json: {\n    failed_node: exec.execution?.error?.node?.name ?? 'Unknown',\n    error_message: exec.execution?.error?.message ?? 'Unknown error',\n    execution_id: exec.execution?.id ?? 'Unknown',\n    workflow_url: 'YOUR_N8N_INSTANCE_URL/workflow/' + (exec.execution?.workflowId ?? 'WORKFLOW_ID') + '/executions/' + (exec.execution?.id ?? ''),\n    timestamp: new Date().toISOString()\n  },\n  pairedItem: { item: 0 }\n}];"
+      },
+      "id": "99aa15f6-d135-4bb3-97b4-5bec321ada0d",
+      "name": "Build Error Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        288,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_OPS_SLACK_CHANNEL"
+        },
+        "text": "=\u274c *Workflow Error \u2014 T4 Support Agent*\n*Failed node:* {{ $json.failed_node }}\n*Error:* {{ $json.error_message }}\n*Execution ID:* {{ $json.execution_id }}\n*Debug link:* {{ $json.workflow_url }}",
+        "otherOptions": {}
+      },
+      "id": "24fe71ed-6d26-4cd4-82b4-a757954d4c32",
+      "name": "Send Error Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        1120
+      ],
+      "webhookId": "2aef0056-b274-4c8c-ad69-ff133437c50f",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "trigger": "message",
+        "channelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "options": {}
+      },
+      "id": "48626a4d-b2c1-4439-a0a6-f44b69dab197",
+      "name": "Slack Event Trigger",
+      "type": "n8n-nodes-base.slackTrigger",
+      "typeVersion": 1,
+      "position": [
+        304,
+        -224
+      ],
+      "webhookId": "d992d527-3d96-48ba-b121-ad699619c9a9",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "id": "eb926b5f-375f-4dcc-b965-98a6264f92ef",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -224
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "## T4: Autonomous Customer Support Agent\n\n### How it works\n1. **Receive** \u2014 Webhook accepts requests; API key auth and rate limiting fire before any DB write\n2. **Guard** \u2014 Five checks block empty, duplicate, oversized, and handover messages before any AI call\n3. **Respond** \u2014 Sends 202 Accepted immediately; agent runs async so callers never time out on Ollama\n4. **Reason** \u2014 AI agent searches up to three Supabase knowledge bases; falls back to Tavily web search when all KBs miss\n5. **Route** \u2014 High/medium confidence \u2192 answer delivered via Slack, email, or HTTP callback; low confidence \u2192 escalation with business-hours routing\n\n### Setup\n- [ ] Run the SQL in the **Supabase Setup** sticky to create all 5 tables and 3 KB tables\n- [ ] Pull Ollama models: `ollama pull qwen2.5:7b && ollama pull nomic-embed-text`\n- [ ] Add credentials: Supabase (x2), Postgres, Tavily, Slack, Gmail\n- [ ] Set your API key in the **Validate API Key** node\n- [ ] Populate Supabase KB tables with embedded documents\n\n### Required credentials\nSupabase API, Postgres, Ollama (no key), Tavily API, Slack OAuth, Gmail OAuth\n\n### Customization\n- **Swap model:** Replace the Ollama Chat node with OpenAI, Anthropic, or Gemini \u2014 no other changes needed\n- **Add KBs:** Duplicate any Supabase Vector Store tool node; update `queryName` and `queryDescription`\n- **Adjust thresholds:** Rate limit (10/min) and spike alert (5/hr) \u2014 set in the IF nodes\n- **Change trigger:** Enable the Slack or Gmail Trigger node (disabled, top-left) and remove the Webhook node",
+        "height": 800,
+        "width": 300,
+        "color": 2
+      },
+      "id": "8c0e47d1-0c2c-43ba-81ea-8b824c983f8e",
+      "name": "Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        -336
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Trigger Alternatives\n\nWebhook is the default. To swap: enable the **Slack Event Trigger** or **Gmail Trigger** node above (currently disabled), remove the Webhook node, and map your trigger's message and session fields in **Normalise Request**. No other changes needed.",
+        "height": 120,
+        "width": 640,
+        "color": 7
+      },
+      "id": "8c9e8928-8e06-4221-9ec6-773c519fc78c",
+      "name": "Trigger Alternatives",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -368
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Auth & Rate Limiting\n\nAPI key required in `x-api-key` header \u2014 wrong or missing key returns 401, no DB writes occur.\nRate limit: 10 requests per session per 60 s. Adjust in **Check Rate Limit**.\nCleanup: `DELETE FROM support_rate_limits WHERE created_at < now() - interval '1 hour'`",
+        "height": 180,
+        "width": 1700,
+        "color": 7
+      },
+      "id": "c997f6d5-94e9-4b4b-9f6c-1aab692860b9",
+      "name": "Auth & Rate Limiting",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Message Guards\n\nFive guards fire before any AI call: empty message \u2192 400, duplicate `message_id` \u2192 200 (idempotent), message >2000 chars \u2192 400, explicit handover request \u2192 escalation.\nDedup table uses `message_id` as primary key \u2014 safe to retry.",
+        "height": 180,
+        "width": 1640,
+        "color": 7
+      },
+      "id": "5611079a-cfa5-4d67-be4e-8b5fbb6a7564",
+      "name": "Message Guards",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1808,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Preprocessing & Async Ack\n\nPII (emails, phones, card numbers) stripped before the query reaches the AI.\n202 Accepted fires here \u2014 caller acknowledged immediately; agent runs async and delivers the answer via Slack, email, or callback.",
+        "height": 180,
+        "width": 260,
+        "color": 7
+      },
+      "id": "35b4a2b6-3ca2-469a-a0e7-1c4f92a4f621",
+      "name": "Preprocessing & Async Ack",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3552,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## AI Agent & Knowledge Bases\n\nAgent picks KBs using tool descriptions \u2014 no hardcoded routing. Falls back to Tavily web search when all KBs miss.\n**Swap model:** Replace the Ollama node with OpenAI, Anthropic, or Gemini.\n**Add KBs:** Duplicate any Supabase Vector Store tool node; update `queryName`.",
+        "height": 180,
+        "width": 1000,
+        "color": 7
+      },
+      "id": "09fe6859-d92c-4528-a42d-ddf90210afc6",
+      "name": "AI Agent & Knowledge Bases",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3824,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Confidence Routing\n\nAgent returns `{ answer, confidence: high|medium|low, sources, kb_miss }`.\n`high` or `medium` \u2192 auto-reply. `low` \u2192 escalation.\nParse failure defaults to `low` \u2014 raw text preserved as the answer.",
+        "height": 180,
+        "width": 520,
+        "color": 7
+      },
+      "id": "0fe5b5db-a224-4035-a2aa-a755691abebd",
+      "name": "Confidence Routing",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4944,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Auto-Reply & Delivery\n\nRouted by `channel` field in the webhook payload: `\"slack\"` \u2192 Slack thread, `\"email\"` \u2192 Gmail, anything else \u2192 HTTP callback to `callback_url`.\nPII scrubbed from answer before delivery and before the audit log write.",
+        "height": 180,
+        "width": 1080,
+        "color": 7
+      },
+      "id": "e2399404-9e86-47f1-aad6-3346a5ca440d",
+      "name": "Auto-Reply & Delivery",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        5568,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Knowledge Base Gaps\n\nWhen `kb_miss = true` the unanswered question is logged to `support_kb_gaps`. Review this table periodically to identify gaps and improve your knowledge bases.",
+        "height": 100,
+        "width": 520,
+        "color": 7
+      },
+      "id": "98f8f281-1f98-4960-bfda-3877a6df9ac4",
+      "name": "Knowledge Base Gaps",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4944,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Escalation Path\n\nTriggered by low confidence or explicit handover. Supabase INSERT fires before Slack/email \u2014 record saved even if Slack is down.\nBusiness hours UTC 9\u201317: immediate Slack alert. Off-hours: status \u2192 `queued_off_hours` + Gmail backup.",
+        "height": 100,
+        "width": 1640,
+        "color": 7
+      },
+      "id": "039462fa-f818-45c9-997d-3a243ae47df9",
+      "name": "Escalation Path",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        5568,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Alerting & Error Handling\n\n**Spike:** >5 escalations per hour triggers an operator Slack alert. Adjust in **Check Escalation Rate**.\n**Errors:** Error Trigger (bottom-left) catches any unhandled failure and sends a Slack alert with a direct execution link.",
+        "height": 100,
+        "width": 840,
+        "color": 7
+      },
+      "id": "e3885916-0ecd-4345-b29b-ce84faae5972",
+      "name": "Alerting & Error Handling",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        5840,
+        832
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Error Handler\n\nCatches any unhandled workflow error. Sends a Slack alert with the failed node name, error message, and a direct link to the n8n execution for one-click debugging.",
+        "height": 100,
+        "width": 800,
+        "color": 7
+      },
+      "id": "5d2b5d62-ec78-49d7-972b-93f68661ae1e",
+      "name": "Error Handler",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        1008
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Supabase Setup\n\nRun SQL in the Supabase SQL editor before activating.\n\n**5 tables:** `support_rate_limits`, `support_message_ids`, `support_audit_log`, `support_kb_gaps`, `support_escalations`\n\n**Per KB:** create a vector table with `embedding vector(768)`, `ivfflat` index, and `match_<table>` function. Set each Vector Store node's **Query Name** to match.\n\nFull DDL: see template description.",
+        "height": 700,
+        "width": 300,
+        "color": 7
+      },
+      "id": "238d0b43-82fe-4e7f-82cc-657ba51cdf21",
+      "name": "Supabase Setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        480
+      ]
+    }
+  ],
+  "connections": {
+    "Receive Support Request": {
+      "main": [
+        [
+          {
+            "node": "Validate API Key",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate API Key": {
+      "main": [
+        [
+          {
+            "node": "Normalise Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return 401 Unauthorized",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalise Request": {
+      "main": [
+        [
+          {
+            "node": "Log Request Timestamp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Request Timestamp": {
+      "main": [
+        [
+          {
+            "node": "Count Recent Requests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Count Recent Requests": {
+      "main": [
+        [
+          {
+            "node": "Check Rate Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Rate Limit": {
+      "main": [
+        [
+          {
+            "node": "Return 429 Too Many Requests",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check Message Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Message Body": {
+      "main": [
+        [
+          {
+            "node": "Look Up Message ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return 400 Empty Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Look Up Message ID": {
+      "main": [
+        [
+          {
+            "node": "Check If Already Processed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check If Already Processed": {
+      "main": [
+        [
+          {
+            "node": "Return 200 Already Processed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Register Message ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Register Message ID": {
+      "main": [
+        [
+          {
+            "node": "Check Message Length",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Message Length": {
+      "main": [
+        [
+          {
+            "node": "Detect Handover Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return 400 Message Too Long",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detect Handover Request": {
+      "main": [
+        [
+          {
+            "node": "Build Escalation Payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sanitise Query and Flag PII",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sanitise Query and Flag PII": {
+      "main": [
+        [
+          {
+            "node": "Acknowledge Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RAG Support Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Language Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "RAG Support Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Conversation Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "RAG Support Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Primary Knowledge Base": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG Support Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Secondary Knowledge Base": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG Support Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Reference Knowledge Base": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG Support Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Web": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG Support Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Search Primary Knowledge Base",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Search Secondary Knowledge Base",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Search Reference Knowledge Base",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RAG Support Agent": {
+      "main": [
+        [
+          {
+            "node": "Extract Confidence and Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Confidence and Sources": {
+      "main": [
+        [
+          {
+            "node": "Route by Confidence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Confidence": {
+      "main": [
+        [
+          {
+            "node": "Scrub PII from Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Escalation Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrub PII from Response": {
+      "main": [
+        [
+          {
+            "node": "Write to Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write to Audit Log": {
+      "main": [
+        [
+          {
+            "node": "Route by Channel",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check for Knowledge Base Miss",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Channel": {
+      "main": [
+        [
+          {
+            "node": "Send Answer via Slack",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Answer via Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Answer via Callback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for Knowledge Base Miss": {
+      "main": [
+        [
+          {
+            "node": "Log Knowledge Base Gap",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Build Escalation Payload": {
+      "main": [
+        [
+          {
+            "node": "Queue Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Queue Escalation": {
+      "main": [
+        [
+          {
+            "node": "Get Current Time",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Count Recent Escalations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Current Time": {
+      "main": [
+        [
+          {
+            "node": "Check Business Hours",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Business Hours": {
+      "main": [
+        [
+          {
+            "node": "Send Escalation Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark as Off-Hours",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark as Off-Hours": {
+      "main": [
+        [
+          {
+            "node": "Send Escalation Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Count Recent Escalations": {
+      "main": [
+        [
+          {
+            "node": "Check Escalation Rate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Escalation Rate": {
+      "main": [
+        [
+          {
+            "node": "Send Operator Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Build Error Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Error Summary": {
+      "main": [
+        [
+          {
+            "node": "Send Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "instanceId": ""
+  },
+  "nodeGroups": [],
+  "pinData": {},
+  "versionId": "b229bf21-0cf0-4063-b8b4-770eb629d9f5",
+  "tags": [
+    {
+      "updatedAt": "2026-08-26T10:55:06.141Z",
+      "createdAt": "2026-08-26T10:55:06.141Z",
+      "id": "LKdmuU0JbdVXbjL0",
+      "name": "github"
+    }
+  ],
+  "activeVersion": null
+}

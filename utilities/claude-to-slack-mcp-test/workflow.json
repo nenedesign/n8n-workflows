@@ -1,0 +1,87 @@
+{
+  "id": "PuJcEYRtBaGZmrO7",
+  "name": "Claude to Slack MCP Connection Test",
+  "description": "Triggered by a chat prompt from Claude Code. Sends the chat message to a Slack channel.",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "responseMode": "lastNode"
+        }
+      },
+      "id": "75f54d57-018e-4569-b657-449d8ffe5860",
+      "name": "Chat Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "f27a48f3-c5cf-4ce4-9a93-fc9f6e8ed2b4"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SLACK_CHANNEL_ID"
+        },
+        "text": "Hello from Claude! Checking MCP connection :)",
+        "otherOptions": {}
+      },
+      "id": "1f4f4290-0900-4628-8c51-c0661cd5c90b",
+      "name": "Send to Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        224,
+        0
+      ],
+      "webhookId": "ac14fc99-2296-4b84-8c8a-113d1b478ca2",
+      "credentials": {
+        "slackApi": {
+          "id": "",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "Send to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": ""
+  },
+  "nodeGroups": [],
+  "pinData": {},
+  "versionId": "274a430f-0e3f-4bd1-8df9-c448fde61c4a",
+  "tags": [
+    {
+      "updatedAt": "2026-08-26T10:55:06.141Z",
+      "createdAt": "2026-08-26T10:55:06.141Z",
+      "id": "LKdmuU0JbdVXbjL0",
+      "name": "github"
+    }
+  ],
+  "activeVersion": null
+}

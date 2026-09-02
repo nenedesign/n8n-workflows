@@ -1,0 +1,506 @@
+{
+  "id": "L2iqHgYwL4mml172",
+  "name": "Slack - Gemini Agent Socket Mode",
+  "description": null,
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Gemini AI Agent \u2014 Slack + Local Chat\n\nA conversational AI agent powered by Gemini with access to live tools: weather forecasts, news feeds, stock quotes, Wikipedia lookups, and calculations.\n\n**Two ways to use it:**\n- **Local Chat** \u2014 test directly inside n8n using the built-in chat interface. No Slack needed.\n- **Slack Bot** \u2014 @mention your bot in any Slack channel and it replies in-thread.\n\n**Quick start:**\n1. Connect your Gemini API key (see setup note)\n2. Connect your Slack credential and set your channel ID in the Slack Bot Trigger node\n3. Activate the workflow\n4. Try: *\"What's the weather in Tokyo?\"* or *\"What's AAPL trading at?\"*",
+        "height": 460,
+        "width": 392
+      },
+      "id": "1326ed60-c626-4415-9c9b-c640e27ecab7",
+      "name": "Introduction Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        368,
+        240
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "**Test Locally**\nUse the Chat Trigger to test your agent inside n8n \u2014 no Slack required. Click **Open chat** and start asking questions.",
+        "height": 252,
+        "width": 300,
+        "color": 7
+      },
+      "id": "e98c89d9-964f-4aee-9a73-f11f24e2c33e",
+      "name": "Sticky Note12",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        848,
+        336
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "**AI Agent**\nThe agent receives your message, selects the best tool, runs it, and responds. Edit the system prompt inside this node to change how the agent behaves, what it focuses on, or how it formats replies.\n\nTools connected: Weather \u00b7 News \u00b7 Stocks \u00b7 Wikipedia \u00b7 Calculator",
+        "height": 348,
+        "width": 396,
+        "color": 7
+      },
+      "id": "49605910-8943-440b-8dc6-0e868d998bcb",
+      "name": "Sticky Note13",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1232,
+        240
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "**Conversation Memory**\nRetains the last 30 messages so the agent keeps context across a conversation. Adjust **Context Window Length** in this node to shorten or lengthen the memory window.",
+        "height": 404,
+        "width": 308,
+        "color": 7
+      },
+      "id": "9c1d8964-2b88-4c39-851f-ad771bfdfdf3",
+      "name": "Sticky Note15",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1232,
+        672
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "**Tools**\nEach tool extends what the agent can do:\n- **Get Weather** \u2014 live forecasts via Open-Meteo (free, no API key)\n- **Get News** \u2014 RSS headlines from BBC, TechCrunch, n8n blog, and more (free)\n- **Stock Query** \u2014 real-time quotes via Alpha Vantage (free API key required)\n- **Search Wikipedia** \u2014 general knowledge and factual lookups (free, no API key)\n- **Run Calculation** \u2014 math and unit conversions (free, no API key)\n\nAdd more tools by clicking \u2795 on the agent's Tool input.",
+        "height": 404,
+        "width": 372,
+        "color": 7
+      },
+      "id": "ab7e3c5c-9c45-4f64-b9d4-d2900cb44a10",
+      "name": "Sticky Note16",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1632,
+        672
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "toolDescription": "Gets the latest blog posts about any rss feed.",
+        "url": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('URL', `Use one of:\n- https://feeds.bbci.co.uk/news/world/rss.xml (BBC World \u2013 global headlines)\n- https://www.aljazeera.com/xml/rss/all.xml (Al\u202fJazeera English \u2013 in\u2011depth global coverage)\n- http://rss.cnn.com/rss/edition_world.rss (CNN World \u2013 breaking news worldwide)\n- https://techcrunch.com/feed/ (TechCrunch \u2013 global tech & startup news)\n- http://news.ycombinator.com/rss (Hacker News \u2013 tech community headlines)\n- https://n8n.io/blog/rss (n8n Blog \u2013 updates & tutorials)\n- https://www.bonappetit.com/feed/recipes-rss-feed/rss (Bon App\u00e9tit \u2013 recent recipes list)\n- https://www.endsreport.com/rss/news-and-analysis (ENDS Report \u2013 environmental law & policy news)\n- https://medlineplus.gov/groupfeeds/new.xml (MedlinePlus \u2013 health topics & wellness updates)`, 'string') }}",
+        "options": {}
+      },
+      "id": "c5a062fd-a553-4944-9786-837c99e7cfe3",
+      "name": "Get News",
+      "type": "n8n-nodes-base.rssFeedReadTool",
+      "position": [
+        1872,
+        704
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "toolDescription": "Get weather forecast anywhere, anytime. You can make requests by assuming most information, the only thing you need is the location (use the city name to infer lat and long automatically) and time period (assume today if not specified)",
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "latitude",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', `Latitude of the location, e.g. 45.75 for Lyon. Do not ask the user just infer it automatically.`, 'string') }}"
+            },
+            {
+              "name": "longitude",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', `Longitude of the location, e.g. 4.85 for Lyon. Do not ask the user just infer it automatically.`, 'string') }}"
+            },
+            {
+              "name": "current",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters2_Value', `Comma-separated list of current weather variables (no whitespace).\n\nExample: temperature_2m,windspeed_10m,rain.\n\nOptions: temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weathercode,cloudcover_total,pressure_msl,surface_pressure,windspeed_10m,winddirection_10m,windgusts_10m.`, 'string') }}"
+            },
+            {
+              "name": "hourly",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters3_Value', `Comma-separated list of hourly weather variables (no whitespace). Hourly is only useful to get one day's information. For weakly overview please use daily.\n\nExample: temperature_2m,precipitation.\n\nOptions: temperature_2m,relative_humidity_2m,dewpoint_2m,apparent_temperature,precipitation,rain,showers,snowfall,snow_depth,pressure_msl,surface_pressure,cloudcover_total,cloudcover_low,cloudcover_mid,cloudcover_high,windspeed_10m,winddirection_10m,windgusts_10m,visibility,is_day,sunshine_duration,soil_temperature,soil_moisture,PM10,PM2_5,carbon_monoxide,ozone,us_aqi,UV_index.`, 'string') }}"
+            },
+            {
+              "name": "daily",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters4_Value', `Comma-separated list of daily weather variables (no whitespace).\n\nExample: temperature_2m_max,precipitation_sum.\n\nOptions: weathercode,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_sum,rain_sum,showers_sum,snowfall_sum,precipitation_hours,sunrise,sunset,daylight_duration,sunshine_duration,pressure_msl_max,pressure_msl_min,surface_pressure_max,surface_pressure_min,windgusts_10m_max,windspeed_10m_max,winddirection_10m_dominant,shortwave_radiation_sum.`, 'string') }}"
+            },
+            {
+              "name": "start_date",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters5_Value', `Start date in YYYY-MM-DD format. Example: 2025-07-15`, 'string') }}"
+            },
+            {
+              "name": "end_date",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters6_Value', `End date in YYYY-MM-DD format. Must be after start_date. Example: 2025-07-18`, 'string') }}"
+            },
+            {
+              "name": "temperature_unit",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters7_Value', `Unit for temperature. Options: celsius (default), fahrenheit.`, 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "dfa8a804-e86d-4666-8da4-3516f95c3598",
+      "name": "Get Weather",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "position": [
+        1760,
+        704
+      ],
+      "notesInFlow": true,
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 30
+      },
+      "id": "5efa0663-81ce-4a26-bc54-b03094583e75",
+      "name": "Conversation Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "position": [
+        1344,
+        720
+      ],
+      "typeVersion": 1.3
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {
+          "temperature": 0
+        }
+      },
+      "id": "aac60bff-1f5e-46da-a0be-1b26d7e3e396",
+      "name": "Connect Gemini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "position": [
+        944,
+        720
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "**Gemini API Setup**\n\n1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey) and click **Create API key**\n2. Copy the key\n3. Open the **Connect Gemini** node\n4. Click **Select Credential \u2192 Create New**\n5. Paste your API key and save\n\nFree tier: 15 requests/min \u00b7 1M tokens/day \u2014 sufficient for testing and light production use.",
+        "height": 508,
+        "width": 294,
+        "color": 3
+      },
+      "id": "02d131cc-1d52-4263-97e1-d1d389d9f633",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        848,
+        672
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "<role>\nYou are a helpful AI assistant. Your job is to answer questions and complete tasks using your available tools. Be conversational, clear, and honest about your limitations.\n</role>\n\n<instructions>\n<goal>\nHelp users get accurate, useful information by selecting the right tool for each request. Present results clearly. If no tool fits, answer from your own knowledge.\n</goal>\n\n<tools>\n- Use Get Weather when asked about weather, temperature, or forecasts for any location\n- Use Get News when asked for news, articles, or updates on any topic\n- Use Alpha Vantage Stock Query when asked for stock prices or market data\n- Use Search Wikipedia for factual lookups, definitions, history, or general knowledge\n- Use Run Calculation for math, unit conversions, or numerical computations\n- Choose the most relevant tool \u2014 do not use a tool if it does not match the request\n</tools>\n\n<guidelines>\n- Keep responses concise and well-formatted\n- When presenting tool results, summarize clearly \u2014 avoid dumping raw data\n- If you cannot answer reliably, say so honestly\n- Do not fabricate information\n</guidelines>\n\n<context>\nCurrent date and time: {{ $now }}\n</context>\n</instructions>"
+        }
+      },
+      "id": "c3c4bb08-84cd-48c8-8057-a656f7dce7a9",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        1312,
+        432
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "content": "**Slack Bot Trigger**\nFires when someone @mentions your bot in a Slack channel. Set your channel ID in this node before activating. The agent's reply is sent back to the same channel via the Send Slack Reply node.",
+        "height": 252,
+        "width": 300,
+        "color": 7
+      },
+      "id": "e1bfb846-7216-4284-826b-cedec15e36fb",
+      "name": "Sticky Note14",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        848,
+        -16
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Hi there! \ud83d\udc4b",
+        "options": {
+          "inputPlaceholder": "Type your message here...",
+          "showWelcomeScreen": false,
+          "subtitle": "This is for demo purposes. Try me out !",
+          "title": "Your first AI Agent \ud83d\ude80",
+          "responseMode": "lastNode"
+        }
+      },
+      "id": "34ad5823-bfee-4d8d-8ab0-73966b0d7bf8",
+      "name": "Local Chat",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "position": [
+        944,
+        432
+      ],
+      "webhookId": "c1707c74-f096-4237-a44a-a72aff52149e",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "trigger": [
+          "app_mention"
+        ],
+        "channelId": {
+          "__rl": true,
+          "value": "YOUR_SLACK_CHANNEL_ID",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.slackTrigger",
+      "typeVersion": 1,
+      "position": [
+        944,
+        80
+      ],
+      "id": "2413f412-b755-45fe-8d9a-4be570b2da1b",
+      "name": "Slack Bot Trigger",
+      "webhookId": "912029db-f429-4605-baa4-32d87fc66940",
+      "credentials": {
+        "slackApi": {
+          "id": "",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://www.alphavantage.co/query",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "function",
+              "value": "GLOBAL_QUOTE"
+            },
+            {
+              "name": "symbol",
+              "value": "={{ $fromAI(\"symbol\") }}"
+            },
+            {
+              "name": "apikey",
+              "value": "YOUR_ALPHAVANTAGE_API_KEY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        1680,
+        848
+      ],
+      "id": "184fb33b-47fb-419d-9df6-0cd4f5f6c96a",
+      "name": "Alpha Vantage Stock Query"
+    },
+    {
+      "parameters": {},
+      "id": "07cb91f2-2cad-42c9-9084-efda53aa0ee1",
+      "name": "Search Wikipedia",
+      "type": "@n8n/n8n-nodes-langchain.toolWikipedia",
+      "position": [
+        1984,
+        704
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {},
+      "id": "f5cbc549-edf7-47b7-9ffd-8ba45a37b465",
+      "name": "Run Calculation",
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "position": [
+        2096,
+        704
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Slack Bot Trigger').first().json.channel }}"
+        },
+        "text": "={{ $json.output }}",
+        "otherOptions": {
+          "threadTs": "={{ $('Slack Bot Trigger').first().json.event.ts }}"
+        }
+      },
+      "id": "2b7a99e1-635f-4520-9c81-af52b47f9cc6",
+      "name": "Send Slack Reply",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        1600,
+        432
+      ],
+      "typeVersion": 2.2,
+      "continueOnFail": true,
+      "credentials": {
+        "slackApi": {
+          "id": "",
+          "name": "Slack account"
+        }
+      },
+      "webhookId": "2dfc61ac-c853-4916-b058-cf9080ffaf8c"
+    }
+  ],
+  "connections": {
+    "Get News": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Weather": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Connect Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conversation Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send Slack Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Local Chat": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Bot Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alpha Vantage Stock Query": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Wikipedia": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Calculation": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": ""
+  },
+  "nodeGroups": [],
+  "pinData": {},
+  "versionId": "7a24ce60-c9a3-401d-aa5e-2d9e135865e2",
+  "tags": [
+    {
+      "updatedAt": "2026-08-26T10:55:06.141Z",
+      "createdAt": "2026-08-26T10:55:06.141Z",
+      "id": "LKdmuU0JbdVXbjL0",
+      "name": "github"
+    }
+  ],
+  "activeVersion": null
+}

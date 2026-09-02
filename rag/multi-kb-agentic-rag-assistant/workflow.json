@@ -1,0 +1,399 @@
+{
+  "id": "aAOlaGIGMkRgoDGZ",
+  "name": "Multi-knowledge base agentic RAG assistant with n8n, Supabase and Ollama",
+  "description": "Agentic RAG chat agent routing questions to the right Supabase pgvector store using tool descriptions: no custom routing code required. Local AI via Ollama (qwen2.5 / nomic-embed-text); swap for OpenAI, Anthropic, or Gemini. Unlimited knowledge bases.",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "options": {},
+        "path": "2c65c306-4de8-456e-a302-1ed8ee9e18be"
+      },
+      "id": "eb3e7d06-73fd-4088-81de-73c88a734b76",
+      "name": "When Chat Initiated",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -160,
+        208
+      ],
+      "webhookId": "2c65c306-4de8-456e-a302-1ed8ee9e18be"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a knowledgeable assistant with access to multiple knowledge bases.\n\nFor each user question:\n1. Identify which knowledge base(s) are most relevant to the question\n2. Search the relevant tool(s) before answering; do not rely on your training knowledge alone\n3. If the question spans multiple sources, search each relevant one and combine the results\n4. If none of your knowledge bases contain the answer, say so clearly; do not guess or fabricate\n5. Keep responses concise and grounded in what you retrieved\n6. At the end of every response, add a brief source line, e.g. \"Source: Primary Knowledge Base\" (if multiple were searched, list each one)\n\nEach tool has a name and description; use these to decide which to call."
+        }
+      },
+      "id": "b5df68e4-415c-45c5-8a6a-c86122da5708",
+      "name": "RAG Assistant",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        352,
+        208
+      ],
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "model": "qwen2.5:7b",
+        "options": {}
+      },
+      "id": "494f599e-114b-407d-8198-76d9099d3aaf",
+      "name": "Select Ollama Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Search this knowledge base for questions about specific records, documents, or content from your primary data source. This is the first source to search when the question relates to your own content, such as project notes, Notion pages, or internal documents.",
+        "tableName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "documents"
+        },
+        "topK": 5,
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "id": "abe96249-0527-4130-bf6c-c4f35afe5d0c",
+      "name": "Primary Knowledge Base",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        384,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "model": "nomic-embed-text:latest"
+      },
+      "id": "9c612e3b-4b67-4549-813a-c9d358ca8250",
+      "name": "Build Primary Embeddings",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        384,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Search this knowledge base when the question needs background context, definitions, guidelines, or supporting information. Use this for explanatory content such as FAQs, policies, terminology, or reference documentation.",
+        "tableName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "reference_documents"
+        },
+        "topK": 5,
+        "options": {
+          "queryName": "match_reference_documents"
+        }
+      },
+      "id": "6117d599-1a75-4962-afc5-9f3257edae06",
+      "name": "Reference Knowledge Base",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        656,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "model": "nomic-embed-text:latest"
+      },
+      "id": "f33fb1e8-e967-4fdb-93ec-804ab5c0d4e4",
+      "name": "Build Reference Embeddings",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        656,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Search this knowledge base for a third topic area that does not belong in the primary or reference sources. You must update this description, table name, and match function before use, or delete this node and its connected Embeddings node if you only need two knowledge bases.",
+        "tableName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "additional_documents"
+        },
+        "topK": 5,
+        "options": {
+          "queryName": "match_additional_documents"
+        }
+      },
+      "id": "86712edf-6854-4e11-b7a6-6ad356fe653a",
+      "name": "Additional Knowledge Base",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        912,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "model": "nomic-embed-text:latest"
+      },
+      "id": "67c43880-adf7-42b9-b0ec-dd284ea5196b",
+      "name": "Build Additional Embeddings",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        912,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "id": "f52cace0-b93e-46c1-8f92-6eb43032af92",
+      "name": "Store Chat History in Postgres",
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        496
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "53311db4-7463-494b-8608-e1b6940eb343",
+      "name": "When Error Occurs",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        512,
+        1040
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ { workflow: $json.workflow.name, execution_id: $json.execution.id, execution_url: $json.execution.url, error_message: $json.error.message, error_node: $json.error.node.name, timestamp: $now } }}",
+        "options": {}
+      },
+      "id": "ae4f3d94-0aa2-49a1-bf4d-c6a408a1c687",
+      "name": "Build Error Summary",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        752,
+        1040
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Multi-knowledge base agentic RAG assistant with n8n, Supabase and Ollama\n\n### How it works\n\n1. A user sends a message through the built-in n8n chat interface\n2. The AI agent reads each tool's name and description to decide which knowledge base(s) to query: no routing code required\n3. Retrieves the most relevant chunks from the matching Supabase pgvector store using semantic search\n4. Generates a grounded answer using only retrieved content, appending a source attribution line\n5. Conversation history is stored in Postgres, giving the agent context for follow-up questions throughout the session\n\n### Setup\n\n- [ ] Enable pgvector in Supabase: Database > Extensions > search \"vector\" and enable it\n- [ ] Pull Ollama models: `ollama pull qwen2.5:7b` and `ollama pull nomic-embed-text`\n- [ ] Add credentials in n8n: Supabase, Postgres (for memory), and Ollama\n- [ ] Populate your Supabase vector tables using the companion ingestion template or any other method\n- [ ] Open each knowledge base tool node and set the table name, query function name, and description\n- [ ] Activate the workflow and click the chat bubble icon to start chatting\n\n### Customization\n\nSwap the Ollama model node for OpenAI, Anthropic, or Google Gemini. Add more knowledge bases by duplicating any Supabase tool node and giving it a new table name and description: the agent routes to it automatically. Tune the system prompt in the RAG Assistant node to adjust routing priorities or citation style. Adjust topK per tool to control retrieval depth.",
+        "height": 1100,
+        "width": 480
+      },
+      "id": "93ecd04e-3fc3-4096-b0d3-75edfc14e62e",
+      "name": "Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Chat trigger and memory\n\nReceives user messages via the built-in n8n chat interface. Ollama provides the language model; Postgres stores conversation history so follow-up questions work naturally across the full session.",
+        "height": 640,
+        "width": 384,
+        "color": 7
+      },
+      "id": "33fa20c7-a9ea-49f9-8292-d1462ab9ad67",
+      "name": "Chat trigger and memory",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## RAG agent and knowledge bases\n\nRoutes questions to the right pgvector table based on each tool's description: no routing code required. Update each tool's table name, function name, and description. Remove the Additional Knowledge Base node if you only need two sources.",
+        "height": 800,
+        "width": 992,
+        "color": 7
+      },
+      "id": "d6565459-8597-4703-bf24-110e4e5687d0",
+      "name": "RAG agent and knowledge bases",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        272,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Error handler\n\nFires automatically when the workflow fails. Add a Slack, email, or webhook node after Build Error Summary to receive alerts with the error message and a link to the failed execution.",
+        "height": 336,
+        "width": 560,
+        "color": 7
+      },
+      "id": "b388bcd1-b09b-45e0-a653-ca0ab7ef3af5",
+      "name": "Error handler",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        416,
+        864
+      ]
+    }
+  ],
+  "connections": {
+    "Primary Knowledge Base": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG Assistant",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reference Knowledge Base": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG Assistant",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Additional Knowledge Base": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG Assistant",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Chat Initiated": {
+      "main": [
+        [
+          {
+            "node": "RAG Assistant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Ollama Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "RAG Assistant",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Primary Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Primary Knowledge Base",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Reference Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Reference Knowledge Base",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Additional Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Additional Knowledge Base",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Chat History in Postgres": {
+      "ai_memory": [
+        [
+          {
+            "node": "RAG Assistant",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Error Occurs": {
+      "main": [
+        [
+          {
+            "node": "Build Error Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": ""
+  },
+  "nodeGroups": [],
+  "pinData": {},
+  "versionId": "548bf9f2-7c3a-49b2-ac96-d998fd91ed2c",
+  "tags": [
+    {
+      "updatedAt": "2026-08-26T10:55:06.141Z",
+      "createdAt": "2026-08-26T10:55:06.141Z",
+      "id": "LKdmuU0JbdVXbjL0",
+      "name": "github"
+    }
+  ],
+  "activeVersion": null
+}
