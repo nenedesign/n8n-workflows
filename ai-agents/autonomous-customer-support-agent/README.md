@@ -1,5 +1,7 @@
 # Autonomous Customer Support Agent with Multi-KB RAG, Web Search Fallback and Human Escalation
 
+![Workflow canvas preview](./preview.png)
+
 A 50-node production-grade customer support agent that handles inbound support requests end-to-end. It validates and sanitises incoming requests, queries multiple knowledge bases, falls back to web search when the KB returns no result, routes answers by confidence score, and escalates to a human agent when needed — all asynchronously.
 
 ## Who it's for

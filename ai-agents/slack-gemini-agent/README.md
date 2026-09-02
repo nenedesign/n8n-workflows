@@ -1,5 +1,7 @@
 # Slack Gemini Agent
 
+![Workflow canvas preview](./preview.png)
+
 A conversational AI agent powered by Google Gemini that lives in your Slack workspace. @mention it in any channel and it responds in-thread using live tools: weather forecasts, news feeds, stock quotes, Wikipedia lookups, and calculations. Also includes a built-in n8n chat interface for local testing without Slack.
 
 ## Who it's for

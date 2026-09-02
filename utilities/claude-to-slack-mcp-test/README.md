@@ -1,5 +1,7 @@
 # Claude to Slack MCP Connection Test
 
+![Workflow canvas preview](./preview.png)
+
 A minimal 2-node utility workflow for verifying that your Claude Code MCP server can successfully connect to and post messages in Slack. Run it once after configuring your MCP setup to confirm the integration is working before building anything on top of it.
 
 ## Who it's for

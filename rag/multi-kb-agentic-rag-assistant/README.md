@@ -1,5 +1,7 @@
 # Multi-Knowledge Base Agentic RAG Assistant with n8n, Supabase and Ollama
 
+![Workflow canvas preview](./preview.png)
+
 A production-ready agentic RAG assistant that queries multiple Supabase vector stores simultaneously and routes answers through an AI agent. The agent autonomously selects which knowledge base to search based on the query, returns a grounded answer with source citations, and falls back gracefully when no relevant content is found.
 
 Also published on the [n8n marketplace](https://n8n.io/creators/).
