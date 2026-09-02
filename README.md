@@ -2,7 +2,7 @@
 
 > AI Product Manager, Builder & Strategist — 20 years shipping 0-to-1 products, now building production-grade AI automation with n8n.
 
-I'm Neville Ko, currently Head of Product & Experience at [Distinct AI](https://www.distinct.ai/) and an [official n8n creator]([https://n8n.io/creators/](https://n8n.io/workflows/18427-seed-a-supabase-ai-knowledge-base-from-notion-with-ollama-embeddings/) with a published template on the n8n marketplace (more templates pending n8n approval). This repo contains workflow templates I've built across agentic RAG, AI agents, and developer utilities — designed to be imported directly into n8n and adapted for real use cases.
+I'm Neville Ko, currently Head of Product & Experience at [Distinct AI](https://www.distinct.ai/) and an [official n8n creator](https://n8n.io/creators/](https://n8n.io/workflows/18427-seed-a-supabase-ai-knowledge-base-from-notion-with-ollama-embeddings/) with a published template on the n8n marketplace (more templates pending n8n approval). This repo contains workflow templates I've built across agentic RAG, AI agents, and developer utilities — designed to be imported directly into n8n and adapted for real use cases.
 
 **Links:** [Portfolio](https://www.fromus.ca/ai-builds) · [LinkedIn](https://www.linkedin.com/in/nevilleko/) · [n8n Marketplace](https://n8n.io/creators/)
 
