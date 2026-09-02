@@ -1,0 +1,361 @@
+{
+  "updatedAt": "2026-09-02T19:30:35.937Z",
+  "createdAt": "2026-09-02T18:25:07.827Z",
+  "id": "MOOB9Jaqx5qa1mMB",
+  "name": "[GitHub] AI Daily Briefing Bot",
+  "description": "Fetches top stories from 3 RSS feeds daily, summarizes them using a local Ollama model, and posts a morning briefing to Slack.",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "id": "6159b2f1-4810-4754-9e14-9c623f85b17d",
+      "name": "Daily 08:00 Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://techcrunch.com/feed/",
+        "options": {}
+      },
+      "id": "21d5e9a0-21d2-4a09-8f21-9d72bd0cb35b",
+      "name": "Fetch TechCrunch",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "364b8bc1-2b11-47d8-80ea-e7dc1645aae2",
+      "name": "Merge Feeds 1+2",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        448,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://hnrss.org/frontpage",
+        "options": {}
+      },
+      "id": "cfc5a03b-ca1b-45f5-a1d2-bd55a3861c25",
+      "name": "Fetch Hacker News",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        192
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "7c3c2c56-3d20-4d35-91fa-e7e1aebf5b79",
+      "name": "Merge All Feeds",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        672,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://blog.n8n.io/rss/",
+        "options": {}
+      },
+      "id": "df3def8c-beb5-4a98-858b-db6d3e551380",
+      "name": "Fetch n8n Blog",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "summarizationMethodAndPrompts": {
+            "values": {
+              "combineMapPrompt": "Extract the key point from this news article in one bullet point. Format: \u2022 Article title \u2014 one sentence takeaway.\n\n{text}\n\nBULLET:",
+              "prompt": "You are a morning briefing assistant. Combine these news bullet points into a concise morning briefing. Start with \"Good morning! Here's your daily tech briefing:\" and end with a one-line theme summary.\n\n{text}\n\nBRIEFING:"
+            }
+          }
+        }
+      },
+      "id": "6f74a1cc-8773-4bdf-8440-3f8305b75228",
+      "name": "Generate Daily Briefing",
+      "type": "@n8n/n8n-nodes-langchain.chainSummarization",
+      "typeVersion": 2.1,
+      "position": [
+        896,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "model": "qwen2.5:7b",
+        "options": {}
+      },
+      "id": "ca4b1d3f-af50-4073-a633-39df4d0dd7ed",
+      "name": "Ollama Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        976,
+        416
+      ],
+      "credentials": {
+        "ollamaApi": {
+          "id": "",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SLACK_CHANNEL_ID"
+        },
+        "text": "={{ $json.output }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "id": "3b9230fb-497b-44b0-ad17-c5bce4bf51c1",
+      "name": "Post Daily Briefing",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        1248,
+        192
+      ],
+      "webhookId": "577a87a2-8172-4fbe-9d0a-c57d10d44fb3",
+      "credentials": {
+        "slackApi": {
+          "id": "",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## AI Daily Briefing Bot\n\nFetches top stories from 3 RSS feeds each morning, summarizes them with a local Ollama model, and posts a morning briefing to your Slack channel.\n\n**Flow:**\n1. Trigger fires at 08:00 daily\n2. TechCrunch, Hacker News, and n8n Blog are fetched in parallel\n3. All articles are merged into a single stream\n4. Summarization Chain distills each article to one bullet point, then combines them into a single briefing\n5. Briefing is posted to Slack",
+        "height": 440,
+        "width": 380,
+        "color": 2
+      },
+      "id": "59a04b05-6ef3-40c6-b7e4-7cb43100a0c0",
+      "name": "Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Prerequisites\n\n**Ollama** running locally with model pulled:\n- `qwen2.5:7b` \u2014 runs the summarization\n- Pull with: `ollama pull qwen2.5:7b`\n- Default URL: `http://localhost:11434`\n\n**Slack** credential connected in n8n:\n- Create a Slack App \u2192 Bot Token (xoxb-...)\n- Invite the bot to your target channel before activating",
+        "height": 274,
+        "width": 700,
+        "color": 4
+      },
+      "id": "b4ef158b-6ce5-4e0d-9d6d-a8063dd1d667",
+      "name": "Prerequisites",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        -304
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Configuration\n\n**1. Slack channel**\nIn *Post Daily Briefing*, replace `YOUR_SLACK_CHANNEL_ID` with your channel ID.\n\u2192 Right-click channel in Slack \u2192 Copy link \u2192 the last segment is the ID (e.g. `C0ABC12345`)\n\n**2. Schedule**\nChange the trigger time in *Daily 08:00 Trigger* (default: 08:00 daily)\n\n**3. Swap RSS feeds**\nReplace any URL in the three Fetch nodes with your preferred sources",
+        "height": 384,
+        "width": 490,
+        "color": 5
+      },
+      "id": "96253c62-9e26-4eb4-ae70-031073f5324a",
+      "name": "Configuration",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        896,
+        560
+      ]
+    }
+  ],
+  "connections": {
+    "Daily 08:00 Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch TechCrunch",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Hacker News",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch n8n Blog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch TechCrunch": {
+      "main": [
+        [
+          {
+            "node": "Merge Feeds 1+2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Feeds 1+2": {
+      "main": [
+        [
+          {
+            "node": "Merge All Feeds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Hacker News": {
+      "main": [
+        [
+          {
+            "node": "Merge Feeds 1+2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge All Feeds": {
+      "main": [
+        [
+          {
+            "node": "Generate Daily Briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch n8n Blog": {
+      "main": [
+        [
+          {
+            "node": "Merge All Feeds",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Generate Daily Briefing": {
+      "main": [
+        [
+          {
+            "node": "Post Daily Briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Daily Briefing",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": ""
+  },
+  "nodeGroups": [],
+  "pinData": {},
+  "versionId": "058268b7-e364-4e2c-a2fe-d616be59945e",
+  "activeVersionId": null,
+  "versionCounter": 9,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [
+    {
+      "updatedAt": "2026-08-26T10:55:06.141Z",
+      "createdAt": "2026-08-26T10:55:06.141Z",
+      "id": "LKdmuU0JbdVXbjL0",
+      "name": "github"
+    }
+  ],
+  "shared": [
+    {
+      "updatedAt": "2026-09-02T18:25:07.848Z",
+      "createdAt": "2026-09-02T18:25:07.848Z",
+      "role": "workflow:owner",
+      "workflowId": "MOOB9Jaqx5qa1mMB",
+      "projectId": "4eGCBLKHD4ldwBEB",
+      "project": {
+        "updatedAt": "2026-09-01T13:21:19.707Z",
+        "createdAt": "2026-07-31T15:42:33.566Z",
+        "id": "4eGCBLKHD4ldwBEB",
+        "name": "Neville Ko <nenedesign@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "1dad11e6-1c4e-45e5-990d-cfb3abe82588"
+      }
+    }
+  ],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}

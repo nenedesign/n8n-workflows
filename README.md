@@ -16,6 +16,8 @@ I'm Neville Ko, currently Head of Product & Experience at [Distinct AI](https://
 | [Multi-KB agentic RAG assistant](./rag/multi-kb-agentic-rag-assistant/) | RAG | Advanced | AI agent that queries multiple knowledge bases and returns grounded answers with source citations — published on n8n marketplace |
 | [Autonomous customer support agent](./ai-agents/autonomous-customer-support-agent/) | AI Agents | Advanced | 50-node production agent: multi-KB RAG, web search fallback, confidence-gated escalation, PII scrubbing, audit logging |
 | [Slack Gemini Agent](./ai-agents/slack-gemini-agent/) | AI Agents | Intermediate | Gemini-powered Slack bot with live tools: weather, news, stock quotes, Wikipedia, and calculations |
+| [Gmail AI Triage](./ai-agents/gmail-ai-triage/) | AI Agents | Intermediate | AI agent that classifies unread emails and applies labels or marks as read — runs on local Ollama |
+| [AI Daily Briefing Bot](./utilities/ai-daily-briefing-bot/) | Utilities | Beginner | Fetches top stories from 3 RSS feeds, summarizes with Ollama, and posts a morning briefing to Slack |
 | [Claude to Slack MCP Connection Test](./utilities/claude-to-slack-mcp-test/) | Utilities | Beginner | 2-node utility to verify your Claude Code MCP → Slack connection is working |
 
 ---

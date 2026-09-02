@@ -1,0 +1,389 @@
+{
+  "updatedAt": "2026-09-02T19:33:07.750Z",
+  "createdAt": "2026-09-02T18:25:26.676Z",
+  "id": "IwfJw0DHAtyd1cEE",
+  "name": "[GitHub] Gmail AI Triage",
+  "description": "Polls Gmail for unread emails, classifies each one using a local Ollama model, and routes by category: urgent (label), meeting (label), newsletter (mark as read).",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "readStatus": "unread"
+        }
+      },
+      "id": "5acdfddc-56a8-44a0-9658-3ea3f846760c",
+      "name": "New Email Received",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ 'From: ' + $json.from + '\\nSubject: ' + $json.subject + '\\nPreview: ' + $json.snippet }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an email classification assistant. Classify incoming emails into exactly one of these four categories:\n- urgent: Needs immediate action, time-sensitive, from a real person (not automated)\n- meeting: Calendar invite, scheduling request, or meeting-related email\n- newsletter: Marketing, promotional, subscription, or automated digest email\n- other: Everything else\n\nAlways respond with JSON only, using the exact key \"category\". Example: {\"category\": \"urgent\"}"
+        }
+      },
+      "id": "b7ec14fd-7bb0-4bf7-943e-3eaadfb51770",
+      "name": "Classify Email",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "model": "qwen2.5:7b",
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "id": "370ef291-cbfb-4c27-b2d8-0f9e2ed302ad",
+      "name": "Ollama Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        224,
+        416
+      ],
+      "credentials": {
+        "ollamaApi": {
+          "id": "",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\"category\": \"urgent\"}"
+      },
+      "id": "700bec2b-55c7-4fd7-b559-0ae7c020815a",
+      "name": "Category Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        368,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.category }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "urgent"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.category }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "meeting"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.category }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "newsletter"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "other"
+        }
+      },
+      "id": "6c99e8fe-3efb-4174-86c9-89cf61ec986f",
+      "name": "Route by Category",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        576,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('New Email Received').item.json.id }}",
+        "labelIds": [
+          "YOUR_URGENT_LABEL_ID"
+        ]
+      },
+      "id": "44ed9882-e3a9-4331-a63e-70ce51df9cf2",
+      "name": "Label: Urgent",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        800,
+        0
+      ],
+      "webhookId": "086be613-5d15-4388-a4a3-24d3b9d52dc2"
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('New Email Received').item.json.id }}",
+        "labelIds": [
+          "YOUR_MEETING_LABEL_ID"
+        ]
+      },
+      "id": "03efa11e-c519-4b5a-9e9c-76773cff32f0",
+      "name": "Label: Meeting",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        800,
+        192
+      ],
+      "webhookId": "a0e64810-792d-42af-9436-b3e3f5177418"
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('New Email Received').item.json.id }}"
+      },
+      "id": "df68639d-5c91-4657-b8ab-fc7bd37f27c8",
+      "name": "Mark Newsletter as Read",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        800,
+        384
+      ],
+      "webhookId": "d9b1a411-6694-481f-8310-d931ae0b912c"
+    },
+    {
+      "parameters": {
+        "content": "## Gmail AI Triage\n\nMonitors your Gmail inbox for unread emails, classifies each one using a local Ollama model, and automatically applies labels or marks them as read.\n\n**Categories:**\n- **urgent** \u2014 applies your Urgent label\n- **meeting** \u2014 applies your Meeting label\n- **newsletter** \u2014 marks as read\n- **other** \u2014 no action taken\n\nPolls every minute. Only processes unread emails.",
+        "height": 420,
+        "width": 380,
+        "color": 2
+      },
+      "id": "64d392ae-b072-4061-b094-3a7531f673b0",
+      "name": "Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Prerequisites\n\n**Gmail** OAuth2 credential connected in n8n\n\n**Ollama** running locally:\n- `qwen2.5:7b` \u2014 runs the email classification\n- Pull with: `ollama pull qwen2.5:7b`\n- Default URL: `http://localhost:11434`\n\n**Gmail labels** created before activating:\n- Open Gmail \u2192 Settings \u2192 Labels \u2192 Create label\n- Create labels for Urgent and Meeting (or your preferred names)",
+        "height": 346,
+        "width": 600,
+        "color": 4
+      },
+      "id": "f99a2ca3-01b1-48ff-9513-e39c82f66784",
+      "name": "Prerequisites",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -208
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Configuration\n\n**Label IDs** \u2014 In *Label: Urgent* and *Label: Meeting* nodes:\n\u2192 Open each Gmail node \u2192 click the label field \u2192 select your label from the dropdown (this replaces the placeholder automatically)\n\nOr find the ID manually:\n\u2192 Gmail Settings \u2192 Labels \u2192 hover a label \u2192 check the URL\n\n**Poll interval** \u2014 Change *New Email Received* trigger (default: every minute)\n\n**Add categories** \u2014 Edit the *Route by Category* Switch node to add new rules, then connect new Gmail nodes as additional branches",
+        "height": 476,
+        "width": 440,
+        "color": 5
+      },
+      "id": "7aa90f80-11e5-41c0-92e9-e5c50e4048f6",
+      "name": "Configuration",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1024,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "New Email Received": {
+      "main": [
+        [
+          {
+            "node": "Classify Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Email": {
+      "main": [
+        [
+          {
+            "node": "Route by Category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Classify Email",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Category Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Classify Email",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Category": {
+      "main": [
+        [
+          {
+            "node": "Label: Urgent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Label: Meeting",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Newsletter as Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": ""
+  },
+  "nodeGroups": [],
+  "pinData": {},
+  "versionId": "e803802f-aaca-4370-ab49-6f5c071f69c3",
+  "activeVersionId": null,
+  "versionCounter": 10,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [
+    {
+      "updatedAt": "2026-08-26T10:55:06.141Z",
+      "createdAt": "2026-08-26T10:55:06.141Z",
+      "id": "LKdmuU0JbdVXbjL0",
+      "name": "github"
+    }
+  ],
+  "shared": [
+    {
+      "updatedAt": "2026-09-02T18:25:26.685Z",
+      "createdAt": "2026-09-02T18:25:26.685Z",
+      "role": "workflow:owner",
+      "workflowId": "IwfJw0DHAtyd1cEE",
+      "projectId": "4eGCBLKHD4ldwBEB",
+      "project": {
+        "updatedAt": "2026-09-01T13:21:19.707Z",
+        "createdAt": "2026-07-31T15:42:33.566Z",
+        "id": "4eGCBLKHD4ldwBEB",
+        "name": "Neville Ko <nenedesign@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "1dad11e6-1c4e-45e5-990d-cfb3abe82588"
+      }
+    }
+  ],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}
