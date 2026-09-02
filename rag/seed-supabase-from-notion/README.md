@@ -1,5 +1,7 @@
 # Seed a Supabase AI Knowledge Base from Notion with Ollama Embeddings
 
+![Workflow canvas preview](./preview.png)
+
 Automatically ingests pages from a Notion database into a Supabase vector store using locally-run Ollama embeddings. Once seeded, the knowledge base is ready for use with any n8n RAG or agentic workflow.
 
 ## Who it's for
