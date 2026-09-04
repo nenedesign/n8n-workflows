@@ -1,10 +1,8 @@
 # AI Webhook Classifier
 
-POST any text to this webhook and get back a structured JSON classification: category, priority, confidence score, and one-sentence summary.
+![Workflow canvas preview](./preview.png)
 
-## What it does
-
-Receives a text payload via webhook, runs it through OpenAI using a structured output parser, and returns a clean JSON object. No regex or post-processing needed — the model returns valid JSON every time thanks to schema enforcement.
+POST any text to this webhook and get back a structured JSON classification: category, priority, confidence score, and a one-sentence summary. Schema enforcement means valid JSON every time — no regex or post-processing needed.
 
 ## Who it's for
 
@@ -12,56 +10,33 @@ Receives a text payload via webhook, runs it through OpenAI using a structured o
 
 ## Nodes used
 
-- Webhook
-- Edit Fields (Set)
-- OpenAI Chat Model
-- Structured Output Parser
-- AI Agent
-- Respond to Webhook
+- **Webhook** — receives the POST request with the text to classify
+- **Edit Fields** — normalizes the `text` field from the request body
+- **AI Agent** — runs the classification prompt with a structured output parser attached
+- **OpenAI Chat Model** — LLM powering the classification agent
+- **Structured Output Parser** — enforces a JSON schema on the model response
+- **Respond to Webhook** — returns `{ success, text, classification }` as JSON
 
 ## Requirements
 
-- OpenAI API key
-- n8n instance (self-hosted or cloud)
+| Service | Credential | Notes |
+|---------|-----------|-------|
+| OpenAI | OpenAI API key | Any GPT model works |
 
 ## How to import
 
 1. Download `workflow.json`
-2. Open n8n and go to **Workflows → Import from file**
-3. Select the downloaded file
-
-## Setup
-
-1. Connect your OpenAI credential to the OpenAI Chat Model node
-2. Activate the workflow and note the webhook URL
-3. POST a request to test it:
-
-```bash
-curl -X POST YOUR_WEBHOOK_URL \
-  -H "Content-Type: application/json" \
-  -d '{"text": "I cannot log in after resetting my password"}'
-```
-
-**Example response:**
-```json
-{
-  "success": true,
-  "text": "I cannot log in after resetting my password",
-  "classification": {
-    "category": "technical",
-    "priority": "high",
-    "confidence": 0.95,
-    "summary": "User is locked out after a password reset"
-  }
-}
-```
+2. In n8n, go to **Workflows → Add workflow → Import from file**
+3. Connect your OpenAI credential to the OpenAI Chat Model node
+4. Activate the workflow and note the webhook URL
+5. POST `{"text": "I cannot log in after resetting my password"}` to test — you'll get back a JSON object with `category`, `priority`, `confidence`, and `summary`
 
 ## Customization
 
-- Edit the categories and priorities in the system message and JSON schema to match your use case
-- Add a Slack or email node after "Classify Request" to route high-priority items automatically
-- Swap OpenAI for Anthropic or Gemini by replacing the Chat Model node
+- **Change the categories:** Edit the category list in the system message and update the JSON schema in the Structured Output Parser to match
+- **Route high-priority items:** Add a Slack or email node after `Classify Request` triggered by an IF node checking `classification.priority === "high"`
+- **Swap the LLM:** Replace the OpenAI Chat Model node with an Anthropic or Gemini node — no other changes needed
 
 ---
 
-Built by Neville Ko
+Built by Neville Ko. Connect for help or hire via LinkedIn: https://www.linkedin.com/in/nevilleko/

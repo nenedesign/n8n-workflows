@@ -1,10 +1,8 @@
 # RSS Feed to Slack Alert
 
-Monitor any RSS feed and get a Slack notification whenever a new article matches your keyword.
+![Workflow canvas preview](./preview.png)
 
-## What it does
-
-Polls an RSS feed every hour. When a new item's title or content contains your keyword, it posts the article title and link to your Slack channel. Non-matching articles are silently skipped.
+Monitor any RSS feed and get a Slack notification whenever a new article matches your keyword. Non-matching articles are silently skipped — you only get notified when something relevant appears.
 
 ## Who it's for
 
@@ -12,36 +10,34 @@ Polls an RSS feed every hour. When a new item's title or content contains your k
 
 ## Nodes used
 
-- RSS Feed Trigger
-- If
-- Slack
+- **RSS Feed Read Trigger** — polls an RSS feed URL on a schedule
+- **If** — checks whether the article title or content contains your keyword (case-insensitive)
+- **Slack** — posts the matching article title and link to your channel
 
 ## Requirements
 
-- Any publicly accessible RSS feed URL
-- Slack workspace with a Bot OAuth token
-- n8n instance (self-hosted or cloud)
+| Service | Credential | Notes |
+|---------|-----------|-------|
+| Slack | Slack Bot token | Bot must be invited to the target channel |
+
+Set your RSS feed URL in `Poll RSS Feed` — any publicly accessible feed works, no credential required.
 
 ## How to import
 
 1. Download `workflow.json`
-2. Open n8n and go to **Workflows → Import from file**
-3. Select the downloaded file
-
-## Setup
-
-1. Open "Poll RSS Feed" and set your RSS feed URL
-2. Open "Matches Keyword?" and replace `YOUR_KEYWORD` in the rightValue field with your keyword
-3. Connect your Slack Bot credential
-4. Set your Slack channel ID in "Post Article to Slack"
-5. Activate the workflow
+2. In n8n, go to **Workflows → Add workflow → Import from file**
+3. Open `Poll RSS Feed` and replace `YOUR_RSS_FEED_URL` with your feed URL
+4. Open `Matches Keyword?` and replace `YOUR_KEYWORD` in the rightValue field with your keyword
+5. Connect your Slack Bot credential to the `Post Article to Slack` node
+6. Set your channel ID in `Post Article to Slack`: replace `YOUR_SLACK_CHANNEL_ID` with the ID of your channel (right-click a channel in Slack → **Copy link** → the ID is the last segment)
+7. Activate the workflow
 
 ## Customization
 
-- Monitor multiple feeds by duplicating the RSS trigger and merging outputs before the IF node
-- Add OR conditions to match any of several keywords
-- Change the poll interval in the trigger node (every hour, every day, etc.)
+- **Monitor multiple feeds:** Duplicate the trigger node and connect both outputs to a Merge node before the IF node
+- **Match any of several keywords:** Switch the IF node from AND to OR and add additional keyword conditions
+- **Change the poll frequency:** Edit the interval in `Poll RSS Feed` — hourly, daily, or every N minutes
 
 ---
 
-Built by Neville Ko
+Built by Neville Ko. Connect for help or hire via LinkedIn: https://www.linkedin.com/in/nevilleko/

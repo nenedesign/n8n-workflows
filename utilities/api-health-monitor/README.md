@@ -1,47 +1,42 @@
 # API Health Monitor
 
-Monitor a list of HTTP endpoints on a schedule and get a Slack alert whenever one goes down.
+![Workflow canvas preview](./preview.png)
 
-## What it does
-
-Runs every hour, pings each endpoint in your list, and sends a Slack message with the failing URL and error details if any request fails. Healthy endpoints produce no output.
+Monitor a list of HTTP endpoints on a schedule and get a Slack alert whenever one goes down. Healthy endpoints produce no output — you only hear from this workflow when something breaks.
 
 ## Who it's for
 
-**Beginner** — Developers and ops teams who need simple uptime monitoring without a dedicated monitoring service.
+**Beginner** — Developers and ops teams who need simple uptime monitoring without running a dedicated monitoring service.
 
 ## Nodes used
 
-- Schedule Trigger
-- Code
-- HTTP Request
-- If
-- Slack
+- **Schedule Trigger** — fires every hour to kick off the check cycle
+- **Code** — defines the list of endpoints to monitor (name + URL pairs)
+- **HTTP Request** — pings each endpoint with a GET request
+- **If** — routes failed requests (errors, timeouts) to the alert branch
+- **Slack** — posts a down alert with the service name, URL, and error message
 
 ## Requirements
 
-- Slack workspace with a Bot OAuth token
-- n8n instance (self-hosted or cloud)
+| Service | Credential | Notes |
+|---------|-----------|-------|
+| Slack | Slack Bot token | Bot must be invited to the alert channel |
 
 ## How to import
 
 1. Download `workflow.json`
-2. Open n8n and go to **Workflows → Import from file**
-3. Select the downloaded file
-
-## Setup
-
-1. Open the "Define Endpoints to Monitor" Code node and replace the placeholder names and URLs with your real endpoints
-2. Connect your Slack Bot credential
-3. Set your Slack channel ID in "Send Down Alert"
-4. Activate the workflow
+2. In n8n, go to **Workflows → Add workflow → Import from file**
+3. Open the `Define Endpoints to Monitor` node and replace the placeholder names and URLs with your real endpoints
+4. Connect your Slack Bot credential to the `Send Down Alert` node
+5. Set your channel ID in `Send Down Alert`: replace `YOUR_SLACK_CHANNEL_ID` with the ID of your channel (right-click a channel in Slack → **Copy link** → the ID is the last segment)
+6. Activate the workflow
 
 ## Customization
 
-- Change the check interval in "Run Health Checks Hourly" (every 5 minutes, every 15 minutes, etc.)
-- Add more endpoints by adding more items to the Code node array
-- Switch from GET to POST for endpoints that require a specific method
+- **Change the check interval:** Edit the trigger in `Run Health Checks Hourly` — every 5 minutes, every 15 minutes, or daily
+- **Add more endpoints:** Append additional `{ name, url }` objects to the array in the Code node
+- **Test POST endpoints:** Change the method in `Check Endpoint` from GET to POST and add a request body
 
 ---
 
-Built by Neville Ko
+Built by Neville Ko. Connect for help or hire via LinkedIn: https://www.linkedin.com/in/nevilleko/

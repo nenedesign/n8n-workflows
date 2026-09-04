@@ -1,53 +1,45 @@
 # URL & Article Summarizer to Slack
 
-Send any article URL to this webhook and get an AI-generated summary posted to your Slack channel in seconds.
+![Workflow canvas preview](./preview.png)
 
-## What it does
-
-Receives a URL via webhook, fetches the page HTML, summarizes the content using OpenAI, and posts the result to Slack. The webhook also returns the summary as JSON for programmatic use.
+POST any article URL to this webhook and get an AI-generated summary posted to your Slack channel in seconds. The webhook also returns the summary as JSON so you can use it programmatically.
 
 ## Who it's for
 
-**Beginner–Intermediate** — Researchers, content teams, and developers who want to quickly digest articles without reading them in full.
+**Beginner–Intermediate** — Researchers, content teams, and developers who want to digest articles quickly without reading them in full.
 
 ## Nodes used
 
-- Webhook
-- Edit Fields (Set)
-- HTTP Request
-- OpenAI Chat Model
-- AI Agent
-- Slack
-- Respond to Webhook
+- **Webhook** — receives the POST request with the article URL
+- **Edit Fields** — normalizes the `url` field from the request body
+- **HTTP Request** — fetches the raw HTML of the target page
+- **AI Agent** — summarizes the page content using OpenAI
+- **OpenAI Chat Model** — LLM powering the summarization agent
+- **Slack** — posts the summary to your channel
+- **Respond to Webhook** — returns `{ success, url, summary }` as JSON
 
 ## Requirements
 
-- OpenAI API key
-- Slack workspace with a Bot OAuth token
-- n8n instance (self-hosted or cloud)
+| Service | Credential | Notes |
+|---------|-----------|-------|
+| OpenAI | OpenAI API key | Any GPT model works |
+| Slack | Slack Bot token | Bot must be invited to the target channel |
 
 ## How to import
 
 1. Download `workflow.json`
-2. Open n8n and go to **Workflows → Import from file**
-3. Select the downloaded file
-
-## How to use
-
-Activate the workflow and send a POST request to the webhook URL:
-
-```bash
-curl -X POST YOUR_WEBHOOK_URL \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com/article"}'
-```
+2. In n8n, go to **Workflows → Add workflow → Import from file**
+3. Connect your OpenAI credential to the OpenAI Chat Model node
+4. Connect your Slack Bot credential to the Slack node
+5. Set your channel ID in `Post Summary to Slack`: replace `YOUR_SLACK_CHANNEL_ID` with the ID of your channel (right-click a channel in Slack → **Copy link** → the ID is the last segment)
+6. Activate the workflow and POST `{"url": "https://example.com/article"}` to the webhook URL
 
 ## Customization
 
-- Swap OpenAI for Anthropic or Gemini by replacing the Chat Model node
-- Edit the system message in "Summarize Content" to change the summary length or tone
-- Add a second Slack node to post to a different channel based on the URL domain
+- **Swap the LLM:** Replace the OpenAI Chat Model node with an Anthropic or Gemini node — no other changes needed
+- **Adjust the summary style:** Edit the prompt in the `Summarize Content` agent node to change length, tone, or format
+- **Route by domain:** Add a Switch node after the agent to post to different Slack channels based on the article's source
 
 ---
 
-Built by Neville Ko
+Built by Neville Ko. Connect for help or hire via LinkedIn: https://www.linkedin.com/in/nevilleko/
