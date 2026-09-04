@@ -1,0 +1,237 @@
+{
+  "updatedAt": "2026-09-04T17:56:34.842Z",
+  "createdAt": "2026-09-04T17:56:34.842Z",
+  "id": "tf2LTMBFjTl2gdJb",
+  "name": "[GitHub] AI Webhook Classifier",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "148963a5-86d5-4d52-8d4b-cb65a15c1fa8",
+      "name": "Sticky Note 5e111068",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        0
+      ],
+      "parameters": {
+        "content": "## AI Webhook Classifier\n\nPOST any text to this webhook and get back a structured JSON classification: category, priority, confidence score, and summary.\n\n### How it works\n1. A POST request arrives with a `text` field in the body\n2. OpenAI classifies the text using a structured output parser\n3. The webhook returns a JSON object with category, priority, confidence, and summary\n\n### Setup\n1. Connect your OpenAI credential to the OpenAI Chat Model node\n2. Activate the workflow and note the webhook URL\n3. POST `{\"text\": \"I cannot access my account\"}` to the webhook URL\n\n### Customization\nEdit the categories and priorities in the system message and JSON schema to match your use case. Add a Slack or email node after \"Classify Request\" to route high-priority items automatically.",
+        "color": 1,
+        "width": 300,
+        "height": 460
+      }
+    },
+    {
+      "id": "4dc74c8e-7737-48e3-a4e7-c6bbf54be722",
+      "name": "Sticky Note 2718a363",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -50,
+        -50
+      ],
+      "parameters": {
+        "content": "## AI Classification\nUses a structured output parser to enforce JSON schema on the model response \u2014 no regex parsing needed.",
+        "color": 7,
+        "width": 300,
+        "height": 200
+      }
+    },
+    {
+      "id": "4e25907d-de56-40ab-a2f5-e72ce3be2061",
+      "name": "Receive Text to Classify",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        112
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "classify",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "11036fc7-83c1-4f75-aedb-ffdd7c0e70be"
+    },
+    {
+      "id": "b743aa27-cf3c-4cf7-b8bf-3308480cced2",
+      "name": "Normalize Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        112
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "field-text",
+              "name": "text",
+              "value": "={{ $json.body?.text ?? $json.text ?? \"\" }}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "82e2604b-4861-42bb-818c-03d51fb18a86",
+      "name": "Classify Request",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        448,
+        112
+      ],
+      "parameters": {
+        "promptType": "define",
+        "systemMessage": "You are a support triage classifier. Classify the incoming text into a category and priority level. Return only valid JSON matching the schema.",
+        "text": "=Classify the following support request.\n\nText: {{ $(\"Normalize Input\").item.json.text }}\n\nReturn JSON with:\n- category: one of \"billing\", \"technical\", \"account\", \"general\"\n- priority: one of \"low\", \"medium\", \"high\"\n- confidence: a number between 0 and 1\n- summary: a one-sentence description of the request",
+        "hasOutputParser": true
+      }
+    },
+    {
+      "id": "353184c0-e8b6-409f-a7a3-3837fa5cf016",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        464,
+        336
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "d09bfb69-510f-42f8-953b-2cbc9ee74474",
+      "name": "Structure Classification",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        336
+      ],
+      "parameters": {
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{ \"category\": \"technical\", \"priority\": \"high\", \"confidence\": 0.95, \"summary\": \"User cannot log in after password reset\" }"
+      }
+    },
+    {
+      "id": "c2ca2a1d-0059-4c48-9184-765a1c519658",
+      "name": "Return Classification",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        800,
+        112
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"text\": $(\"Normalize Input\").item.json.text, \"classification\": $json.output } }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Receive Text to Classify": {
+      "main": [
+        [
+          {
+            "node": "Normalize Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Input": {
+      "main": [
+        [
+          {
+            "node": "Classify Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Request": {
+      "main": [
+        [
+          {
+            "node": "Return Classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Classify Request",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structure Classification": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Classify Request",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": ""
+  },
+  "nodeGroups": [],
+  "pinData": null,
+  "versionId": "13989dcc-40a6-40b4-9eeb-19fe96d69d99",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "shared": [
+    {
+      "updatedAt": "2026-09-04T17:56:34.848Z",
+      "createdAt": "2026-09-04T17:56:34.848Z",
+      "role": "workflow:owner",
+      "workflowId": "tf2LTMBFjTl2gdJb",
+      "projectId": "4eGCBLKHD4ldwBEB",
+      "project": {
+        "updatedAt": "2026-09-01T13:21:19.707Z",
+        "createdAt": "2026-07-31T15:42:33.566Z",
+        "id": "4eGCBLKHD4ldwBEB",
+        "name": "Neville Ko <nenedesign@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "1dad11e6-1c4e-45e5-990d-cfb3abe82588"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

@@ -1,0 +1,198 @@
+{
+  "updatedAt": "2026-09-04T17:56:04.229Z",
+  "createdAt": "2026-09-04T17:56:04.229Z",
+  "id": "pUmw0kShmeZaSHbM",
+  "name": "[GitHub] GitHub PR to Slack Notifier",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "779300bb-a158-4843-a315-92ffa2fe993f",
+      "name": "Sticky Note e03f8949",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        0
+      ],
+      "parameters": {
+        "content": "## GitHub PR to Slack Notifier\n\nGet a Slack notification every time a pull request is opened, merged, or closed in your GitHub repository.\n\n### How it works\n1. GitHub sends a webhook event when a PR is opened, closed, or merged\n2. The workflow formats a message with the PR title, author, repo, and status\n3. The formatted message posts to your Slack channel\n\n### Setup\n1. Connect your GitHub credential (Personal Access Token or OAuth)\n2. Set your repository owner and name in \"On Pull Request Event\"\n3. Connect your Slack Bot credential\n4. Set your Slack channel ID in \"Post PR Notification\"\n5. Activate the workflow \u2014 n8n will register the webhook with GitHub automatically\n\n### Customization\nAdd more event types (issues, push, releases) by editing the events list in the trigger. Filter by action type using an IF node before the Slack node.",
+        "color": 1,
+        "width": 300,
+        "height": 460
+      }
+    },
+    {
+      "id": "d6aaca9a-5b2e-4695-9daa-1ff74670a5d6",
+      "name": "Sticky Note 11e9f1ff",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -50,
+        -50
+      ],
+      "parameters": {
+        "content": "## Format & Notify\nDetects merged vs closed vs opened state, builds a Slack message, and posts to your channel.",
+        "color": 7,
+        "width": 300,
+        "height": 200
+      }
+    },
+    {
+      "id": "7de5a36e-c962-4b22-b434-988c42ef58db",
+      "name": "On Pull Request Event",
+      "type": "n8n-nodes-base.githubTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "YOUR_GITHUB_OWNER"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "YOUR_GITHUB_REPO"
+        },
+        "events": [
+          "pull_request"
+        ]
+      },
+      "webhookId": "dbd62cc0-9617-4bb1-a25f-b0e35c9167a0"
+    },
+    {
+      "id": "7ba76a2c-1959-4f0f-a1ed-ef6104f8c28d",
+      "name": "Format PR Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "pr-status",
+              "name": "status",
+              "value": "={{ $json.action === \"closed\" && $json.pull_request?.merged ? \"merged\" : $json.action }}",
+              "type": "string"
+            },
+            {
+              "id": "pr-emoji",
+              "name": "emoji",
+              "value": "={{ $json.action === \"closed\" && $json.pull_request?.merged ? \":merged:\" : $json.action === \"opened\" ? \":tada:\" : \":x:\" }}",
+              "type": "string"
+            },
+            {
+              "id": "pr-message",
+              "name": "message",
+              "value": "={{ $json.action === \"closed\" && $json.pull_request?.merged ? \":merged:\" : $json.action === \"opened\" ? \":tada:\" : \":x:\" }} *PR {{ $json.action === \"closed\" && $json.pull_request?.merged ? \"merged\" : $json.action }}:* <{{ $json.pull_request?.html_url }}|{{ $json.pull_request?.title }}>\n:bust_in_silhouette: {{ $json.pull_request?.user?.login }} \u00b7 :file_folder: {{ $json.repository?.full_name }}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "323df65f-caa2-4d70-aa66-f4b1aea1c219",
+      "name": "Post PR Notification",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SLACK_CHANNEL_ID"
+        },
+        "text": "={{ $json.message }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "credentials": {
+        "slackApi": {
+          "id": "",
+          "name": "Slack account"
+        }
+      },
+      "webhookId": "c3a23350-4fd5-46d8-956d-8710e790e338"
+    }
+  ],
+  "connections": {
+    "On Pull Request Event": {
+      "main": [
+        [
+          {
+            "node": "Format PR Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format PR Message": {
+      "main": [
+        [
+          {
+            "node": "Post PR Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": ""
+  },
+  "nodeGroups": [],
+  "pinData": null,
+  "versionId": "44a4201c-d7d2-446d-9779-0f726852b47a",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "shared": [
+    {
+      "updatedAt": "2026-09-04T17:56:04.235Z",
+      "createdAt": "2026-09-04T17:56:04.235Z",
+      "role": "workflow:owner",
+      "workflowId": "pUmw0kShmeZaSHbM",
+      "projectId": "4eGCBLKHD4ldwBEB",
+      "project": {
+        "updatedAt": "2026-09-01T13:21:19.707Z",
+        "createdAt": "2026-07-31T15:42:33.566Z",
+        "id": "4eGCBLKHD4ldwBEB",
+        "name": "Neville Ko <nenedesign@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "1dad11e6-1c4e-45e5-990d-cfb3abe82588"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

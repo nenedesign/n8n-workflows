@@ -1,0 +1,187 @@
+{
+  "updatedAt": "2026-09-04T17:55:34.667Z",
+  "createdAt": "2026-09-04T17:55:34.667Z",
+  "id": "ciASuUFcrCDLWYCa",
+  "name": "[GitHub] RSS Feed to Slack Alert",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "0e82fdd8-48d1-442d-90b0-9eb3ddf31cb1",
+      "name": "Sticky Note 3288841a",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        0
+      ],
+      "parameters": {
+        "content": "## RSS Feed to Slack Alert\n\nMonitor any RSS feed and get a Slack notification whenever a new article matches your keyword.\n\n### How it works\n1. The workflow polls an RSS feed every hour\n2. Each new item is checked for your keyword in the title and content\n3. Matching articles are posted to your Slack channel\n4. Non-matching articles are silently skipped\n\n### Setup\n1. Set your RSS feed URL in \"Poll RSS Feed\"\n2. Set your keyword in \"Matches Keyword?\" \u2014 the rightValue field\n3. Connect your Slack Bot credential\n4. Set your Slack channel ID in \"Post Article to Slack\"\n5. Activate the workflow\n\n### Customization\nMonitor multiple feeds by duplicating the trigger and merging their outputs. Use OR conditions to match any of several keywords. Change the poll interval in \"Poll RSS Feed\".",
+        "color": 1,
+        "width": 300,
+        "height": 460
+      }
+    },
+    {
+      "id": "117fc12c-c8ed-467d-9b3a-c060512688df",
+      "name": "Sticky Note 3052d003",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -50,
+        -50
+      ],
+      "parameters": {
+        "content": "## Keyword Filter\nChecks title and content for your keyword (case-insensitive). Edit the rightValue to change the keyword.",
+        "color": 7,
+        "width": 300,
+        "height": 200
+      }
+    },
+    {
+      "id": "ce39cf36-3416-4b1e-93b1-6f85408882a3",
+      "name": "Poll RSS Feed",
+      "type": "n8n-nodes-base.rssFeedReadTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "feedUrl": "YOUR_RSS_FEED_URL",
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "c954f946-8d15-4945-8f8d-e82fb289d05f",
+      "name": "Matches Keyword?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.title + \" \" + ($json.content ?? $json.summary ?? \"\") }}",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              },
+              "rightValue": "YOUR_KEYWORD"
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "338563f2-589c-4eb0-b62b-0afdb24a7768",
+      "name": "Post Article to Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SLACK_CHANNEL_ID"
+        },
+        "text": "=:newspaper: *New article: {{ $json.title }}*\n{{ $json.link }}\n_Published: {{ $json.pubDate }}_",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "credentials": {
+        "slackApi": {
+          "id": "",
+          "name": "Slack account"
+        }
+      },
+      "webhookId": "6b827aac-23fa-4f53-bc3d-41e8998b00a3"
+    }
+  ],
+  "connections": {
+    "Poll RSS Feed": {
+      "main": [
+        [
+          {
+            "node": "Matches Keyword?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Matches Keyword?": {
+      "main": [
+        [
+          {
+            "node": "Post Article to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": ""
+  },
+  "nodeGroups": [],
+  "pinData": null,
+  "versionId": "5b2dfe61-b46f-40a1-9cd3-c9f84f80c8fa",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "shared": [
+    {
+      "updatedAt": "2026-09-04T17:55:34.669Z",
+      "createdAt": "2026-09-04T17:55:34.669Z",
+      "role": "workflow:owner",
+      "workflowId": "ciASuUFcrCDLWYCa",
+      "projectId": "4eGCBLKHD4ldwBEB",
+      "project": {
+        "updatedAt": "2026-09-01T13:21:19.707Z",
+        "createdAt": "2026-07-31T15:42:33.566Z",
+        "id": "4eGCBLKHD4ldwBEB",
+        "name": "Neville Ko <nenedesign@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "1dad11e6-1c4e-45e5-990d-cfb3abe82588"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

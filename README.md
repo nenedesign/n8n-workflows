@@ -19,6 +19,11 @@ I'm Neville Ko, currently Head of Product & Experience at [Distinct AI](https://
 | [Gmail AI Triage](./ai-agents/gmail-ai-triage/) | AI Agents | Intermediate | AI agent that classifies unread emails and applies labels or marks as read — runs on local Ollama |
 | [AI Daily Briefing Bot](./utilities/ai-daily-briefing-bot/) | Utilities | Beginner | Fetches top stories from 3 RSS feeds, summarizes with Ollama, and posts a morning briefing to Slack |
 | [Claude to Slack MCP Connection Test](./utilities/claude-to-slack-mcp-test/) | Utilities | Beginner | 2-node utility to verify your Claude Code MCP → Slack connection is working |
+| [URL & Article Summarizer to Slack](./utilities/url-article-summarizer-to-slack/) | Utilities | Beginner | POST any URL and get an AI-generated article summary posted to Slack |
+| [API Health Monitor](./utilities/api-health-monitor/) | Utilities | Beginner | Monitor a list of HTTP endpoints on a schedule and alert Slack when one goes down |
+| [RSS Feed to Slack Alert](./utilities/rss-feed-to-slack-alert/) | Utilities | Beginner | Poll an RSS feed and post matching articles to Slack when your keyword appears |
+| [GitHub PR to Slack Notifier](./utilities/github-pr-to-slack-notifier/) | Utilities | Beginner | Post a Slack notification when a GitHub pull request is opened, merged, or closed |
+| [AI Webhook Classifier](./utilities/ai-webhook-classifier/) | Utilities | Intermediate | POST any text and get back a structured JSON classification: category, priority, confidence, summary |
 
 ---
 
