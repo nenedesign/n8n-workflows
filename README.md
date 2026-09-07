@@ -51,7 +51,7 @@ I'm Neville Ko, currently Head of Product & Experience at [Distinct AI](https://
 
 Working implementations of all 10 OWASP LLM risks for financial services, insurance, and legal tech. Includes n8n workflows, system prompt library, and governance checklists mapped to SEC/FINRA, OSFI E-23, SOC 2, and PCI-DSS v4.0.
 
-[View the ai-governance-owasp10 repo](https://github.com/nenedesign/ai-governance-owasp10) · [View the ai-governance-pci-dss repo](https://github.com/nenedesign/ai-governance-pci-dss)
+[View the ai-governance-owasp10 repo](https://github.com/nenedesign/ai-governance-owasp10) · [View the ai-governance-pci-dss repo](https://github.com/nenedesign/ai-governance-pci-dss) · [View the ai-governance-soc2 repo](https://github.com/nenedesign/ai-governance-soc2)
 
 ---
 
