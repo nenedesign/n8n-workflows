@@ -440,7 +440,7 @@
     {
       "parameters": {
         "options": {
-          "systemMessage": "You are an autonomous customer support agent with access to multiple knowledge bases and web search.\n\nFor every question:\n1. Search the most relevant knowledge base tool(s) first \u2014 use tool descriptions to decide which\n2. If the knowledge base returns no useful results, use the Web Search tool\n3. If you find a good answer: respond clearly and cite your source\n4. If you cannot find a reliable answer from any source: say so honestly\n\nAlways respond in this exact JSON format \u2014 no other text, no markdown, just the JSON:\n{\n  \"answer\": \"Your response to the customer. Append a source line: [Source: Primary Knowledge Base] or [Source: Web Search]\",\n  \"confidence\": \"high\",\n  \"sources\": [\"Primary Knowledge Base\"],\n  \"kb_miss\": false\n}\n\nConfidence rules:\n- \"high\": clear specific answer found in knowledge base\n- \"medium\": partial answer, or had to use web search\n- \"low\": no reliable answer found, or answer is uncertain\n\nSet kb_miss to true if no knowledge base returned useful content (web search was the only source, or nothing worked).\nNever guess. Never fabricate. If unsure, set confidence to \"low\"."
+          "systemMessage": "You are an autonomous customer support agent with access to multiple knowledge bases and web search.\n\nFor every question:\n1. Search the most relevant knowledge base tool(s) first: use tool descriptions to decide which\n2. If the knowledge base returns no useful results, use the Web Search tool\n3. If you find a good answer: respond clearly and cite your source\n4. If you cannot find a reliable answer from any source: say so honestly\n\nAlways respond in this exact JSON format: no other text, no markdown, just the JSON:\n{\n  \"answer\": \"Your response to the customer. Append a source line: [Source: Primary Knowledge Base] or [Source: Web Search]\",\n  \"confidence\": \"high\",\n  \"sources\": [\"Primary Knowledge Base\"],\n  \"kb_miss\": false\n}\n\nConfidence rules:\n- \"high\": clear specific answer found in knowledge base\n- \"medium\": partial answer, or had to use web search\n- \"low\": no reliable answer found, or answer is uncertain\n\nSet kb_miss to true if no knowledge base returned useful content (web search was the only source, or nothing worked).\nNever guess. Never fabricate. If unsure, set confidence to \"low\"."
         }
       },
       "id": "791b2124-9938-4772-b98e-723a079418e6",
@@ -764,7 +764,7 @@
     {
       "parameters": {
         "sendTo": "={{ $('Normalise Request').first().json.customer_email }}",
-        "subject": "=Re: Support Request \u2014 {{ $('Normalise Request').first().json.session_id }}",
+        "subject": "=Re: Support Request: {{ $('Normalise Request').first().json.session_id }}",
         "message": "={{ $json.scrubbed_answer }}",
         "options": {}
       },
@@ -1136,7 +1136,7 @@
           "mode": "id",
           "value": "YOUR_OPS_SLACK_CHANNEL"
         },
-        "text": "=\u274c *Workflow Error \u2014 T4 Support Agent*\n*Failed node:* {{ $json.failed_node }}\n*Error:* {{ $json.error_message }}\n*Execution ID:* {{ $json.execution_id }}\n*Debug link:* {{ $json.workflow_url }}",
+        "text": "=\u274c *Workflow Error: T4 Support Agent*\n*Failed node:* {{ $json.failed_node }}\n*Error:* {{ $json.error_message }}\n*Execution ID:* {{ $json.execution_id }}\n*Debug link:* {{ $json.workflow_url }}",
         "otherOptions": {}
       },
       "id": "24fe71ed-6d26-4cd4-82b4-a757954d4c32",
@@ -1194,7 +1194,7 @@
     },
     {
       "parameters": {
-        "content": "## T4: Autonomous Customer Support Agent\n\n### How it works\n1. **Receive** \u2014 Webhook accepts requests; API key auth and rate limiting fire before any DB write\n2. **Guard** \u2014 Five checks block empty, duplicate, oversized, and handover messages before any AI call\n3. **Respond** \u2014 Sends 202 Accepted immediately; agent runs async so callers never time out on Ollama\n4. **Reason** \u2014 AI agent searches up to three Supabase knowledge bases; falls back to Tavily web search when all KBs miss\n5. **Route** \u2014 High/medium confidence \u2192 answer delivered via Slack, email, or HTTP callback; low confidence \u2192 escalation with business-hours routing\n\n### Setup\n- [ ] Run the SQL in the **Supabase Setup** sticky to create all 5 tables and 3 KB tables\n- [ ] Pull Ollama models: `ollama pull qwen2.5:7b && ollama pull nomic-embed-text`\n- [ ] Add credentials: Supabase (x2), Postgres, Tavily, Slack, Gmail\n- [ ] Set your API key in the **Validate API Key** node\n- [ ] Populate Supabase KB tables with embedded documents\n\n### Required credentials\nSupabase API, Postgres, Ollama (no key), Tavily API, Slack OAuth, Gmail OAuth\n\n### Customization\n- **Swap model:** Replace the Ollama Chat node with OpenAI, Anthropic, or Gemini \u2014 no other changes needed\n- **Add KBs:** Duplicate any Supabase Vector Store tool node; update `queryName` and `queryDescription`\n- **Adjust thresholds:** Rate limit (10/min) and spike alert (5/hr) \u2014 set in the IF nodes\n- **Change trigger:** Enable the Slack or Gmail Trigger node (disabled, top-left) and remove the Webhook node",
+        "content": "## T4: Autonomous Customer Support Agent\n\n### How it works\n1. **Receive**: Webhook accepts requests; API key auth and rate limiting fire before any DB write\n2. **Guard**: Five checks block empty, duplicate, oversized, and handover messages before any AI call\n3. **Respond**: Sends 202 Accepted immediately; agent runs async so callers never time out on Ollama\n4. **Reason**: AI agent searches up to three Supabase knowledge bases; falls back to Tavily web search when all KBs miss\n5. **Route**: High/medium confidence \u2192 answer delivered via Slack, email, or HTTP callback; low confidence \u2192 escalation with business-hours routing\n\n### Setup\n- [ ] Run the SQL in the **Supabase Setup** sticky to create all 5 tables and 3 KB tables\n- [ ] Pull Ollama models: `ollama pull qwen2.5:7b && ollama pull nomic-embed-text`\n- [ ] Add credentials: Supabase (x2), Postgres, Tavily, Slack, Gmail\n- [ ] Set your API key in the **Validate API Key** node\n- [ ] Populate Supabase KB tables with embedded documents\n\n### Required credentials\nSupabase API, Postgres, Ollama (no key), Tavily API, Slack OAuth, Gmail OAuth\n\n### Customization\n- **Swap model:** Replace the Ollama Chat node with OpenAI, Anthropic, or Gemini: no other changes needed\n- **Add KBs:** Duplicate any Supabase Vector Store tool node; update `queryName` and `queryDescription`\n- **Adjust thresholds:** Rate limit (10/min) and spike alert (5/hr): set in the IF nodes\n- **Change trigger:** Enable the Slack or Gmail Trigger node (disabled, top-left) and remove the Webhook node",
         "height": 800,
         "width": 300,
         "color": 2
@@ -1226,7 +1226,7 @@
     },
     {
       "parameters": {
-        "content": "## Auth & Rate Limiting\n\nAPI key required in `x-api-key` header \u2014 wrong or missing key returns 401, no DB writes occur.\nRate limit: 10 requests per session per 60 s. Adjust in **Check Rate Limit**.\nCleanup: `DELETE FROM support_rate_limits WHERE created_at < now() - interval '1 hour'`",
+        "content": "## Auth & Rate Limiting\n\nAPI key required in `x-api-key` header: wrong or missing key returns 401, no DB writes occur.\nRate limit: 10 requests per session per 60 s. Adjust in **Check Rate Limit**.\nCleanup: `DELETE FROM support_rate_limits WHERE created_at < now() - interval '1 hour'`",
         "height": 180,
         "width": 1700,
         "color": 7
@@ -1242,7 +1242,7 @@
     },
     {
       "parameters": {
-        "content": "## Message Guards\n\nFive guards fire before any AI call: empty message \u2192 400, duplicate `message_id` \u2192 200 (idempotent), message >2000 chars \u2192 400, explicit handover request \u2192 escalation.\nDedup table uses `message_id` as primary key \u2014 safe to retry.",
+        "content": "## Message Guards\n\nFive guards fire before any AI call: empty message \u2192 400, duplicate `message_id` \u2192 200 (idempotent), message >2000 chars \u2192 400, explicit handover request \u2192 escalation.\nDedup table uses `message_id` as primary key: safe to retry.",
         "height": 180,
         "width": 1640,
         "color": 7
@@ -1258,7 +1258,7 @@
     },
     {
       "parameters": {
-        "content": "## Preprocessing & Async Ack\n\nPII (emails, phones, card numbers) stripped before the query reaches the AI.\n202 Accepted fires here \u2014 caller acknowledged immediately; agent runs async and delivers the answer via Slack, email, or callback.",
+        "content": "## Preprocessing & Async Ack\n\nPII (emails, phones, card numbers) stripped before the query reaches the AI.\n202 Accepted fires here: caller acknowledged immediately; agent runs async and delivers the answer via Slack, email, or callback.",
         "height": 180,
         "width": 260,
         "color": 7
@@ -1274,7 +1274,7 @@
     },
     {
       "parameters": {
-        "content": "## AI Agent & Knowledge Bases\n\nAgent picks KBs using tool descriptions \u2014 no hardcoded routing. Falls back to Tavily web search when all KBs miss.\n**Swap model:** Replace the Ollama node with OpenAI, Anthropic, or Gemini.\n**Add KBs:** Duplicate any Supabase Vector Store tool node; update `queryName`.",
+        "content": "## AI Agent & Knowledge Bases\n\nAgent picks KBs using tool descriptions: no hardcoded routing. Falls back to Tavily web search when all KBs miss.\n**Swap model:** Replace the Ollama node with OpenAI, Anthropic, or Gemini.\n**Add KBs:** Duplicate any Supabase Vector Store tool node; update `queryName`.",
         "height": 180,
         "width": 1000,
         "color": 7
@@ -1290,7 +1290,7 @@
     },
     {
       "parameters": {
-        "content": "## Confidence Routing\n\nAgent returns `{ answer, confidence: high|medium|low, sources, kb_miss }`.\n`high` or `medium` \u2192 auto-reply. `low` \u2192 escalation.\nParse failure defaults to `low` \u2014 raw text preserved as the answer.",
+        "content": "## Confidence Routing\n\nAgent returns `{ answer, confidence: high|medium|low, sources, kb_miss }`.\n`high` or `medium` \u2192 auto-reply. `low` \u2192 escalation.\nParse failure defaults to `low`: raw text preserved as the answer.",
         "height": 180,
         "width": 520,
         "color": 7
@@ -1338,7 +1338,7 @@
     },
     {
       "parameters": {
-        "content": "## Escalation Path\n\nTriggered by low confidence or explicit handover. Supabase INSERT fires before Slack/email \u2014 record saved even if Slack is down.\nBusiness hours UTC 9\u201317: immediate Slack alert. Off-hours: status \u2192 `queued_off_hours` + Gmail backup.",
+        "content": "## Escalation Path\n\nTriggered by low confidence or explicit handover. Supabase INSERT fires before Slack/email: record saved even if Slack is down.\nBusiness hours UTC 9\u201317: immediate Slack alert. Off-hours: status \u2192 `queued_off_hours` + Gmail backup.",
         "height": 100,
         "width": 1640,
         "color": 7

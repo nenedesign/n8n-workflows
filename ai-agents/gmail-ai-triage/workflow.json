@@ -218,7 +218,7 @@
     },
     {
       "parameters": {
-        "content": "## Gmail AI Triage\n\nMonitors your Gmail inbox for unread emails, classifies each one using a local Ollama model, and automatically applies labels or marks them as read.\n\n**Categories:**\n- **urgent** \u2014 applies your Urgent label\n- **meeting** \u2014 applies your Meeting label\n- **newsletter** \u2014 marks as read\n- **other** \u2014 no action taken\n\nPolls every minute. Only processes unread emails.",
+        "content": "## Gmail AI Triage\n\nMonitors your Gmail inbox for unread emails, classifies each one using a local Ollama model, and automatically applies labels or marks them as read.\n\n**Categories:**\n- **urgent**: applies your Urgent label\n- **meeting**: applies your Meeting label\n- **newsletter**: marks as read\n- **other**: no action taken\n\nPolls every minute. Only processes unread emails.",
         "height": 420,
         "width": 380,
         "color": 2
@@ -234,7 +234,7 @@
     },
     {
       "parameters": {
-        "content": "## Prerequisites\n\n**Gmail** OAuth2 credential connected in n8n\n\n**Ollama** running locally:\n- `qwen2.5:7b` \u2014 runs the email classification\n- Pull with: `ollama pull qwen2.5:7b`\n- Default URL: `http://localhost:11434`\n\n**Gmail labels** created before activating:\n- Open Gmail \u2192 Settings \u2192 Labels \u2192 Create label\n- Create labels for Urgent and Meeting (or your preferred names)",
+        "content": "## Prerequisites\n\n**Gmail** OAuth2 credential connected in n8n\n\n**Ollama** running locally:\n- `qwen2.5:7b`: runs the email classification\n- Pull with: `ollama pull qwen2.5:7b`\n- Default URL: `http://localhost:11434`\n\n**Gmail labels** created before activating:\n- Open Gmail \u2192 Settings \u2192 Labels \u2192 Create label\n- Create labels for Urgent and Meeting (or your preferred names)",
         "height": 346,
         "width": 600,
         "color": 4
@@ -250,7 +250,7 @@
     },
     {
       "parameters": {
-        "content": "## Configuration\n\n**Label IDs** \u2014 In *Label: Urgent* and *Label: Meeting* nodes:\n\u2192 Open each Gmail node \u2192 click the label field \u2192 select your label from the dropdown (this replaces the placeholder automatically)\n\nOr find the ID manually:\n\u2192 Gmail Settings \u2192 Labels \u2192 hover a label \u2192 check the URL\n\n**Poll interval** \u2014 Change *New Email Received* trigger (default: every minute)\n\n**Add categories** \u2014 Edit the *Route by Category* Switch node to add new rules, then connect new Gmail nodes as additional branches",
+        "content": "## Configuration\n\n**Label IDs**: In *Label: Urgent* and *Label: Meeting* nodes:\n\u2192 Open each Gmail node \u2192 click the label field \u2192 select your label from the dropdown (this replaces the placeholder automatically)\n\nOr find the ID manually:\n\u2192 Gmail Settings \u2192 Labels \u2192 hover a label \u2192 check the URL\n\n**Poll interval**: Change *New Email Received* trigger (default: every minute)\n\n**Add categories**: Edit the *Route by Category* Switch node to add new rules, then connect new Gmail nodes as additional branches",
         "height": 476,
         "width": 440,
         "color": 5

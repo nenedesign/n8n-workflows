@@ -33,7 +33,7 @@
         -50
       ],
       "parameters": {
-        "content": "## AI Classification\nUses a structured output parser to enforce JSON schema on the model response \u2014 no regex parsing needed.",
+        "content": "## AI Classification\nUses a structured output parser to enforce JSON schema on the model response: no regex parsing needed.",
         "color": 7,
         "width": 300,
         "height": 200

@@ -6,7 +6,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## Gemini AI Agent \u2014 Slack + Local Chat\n\nA conversational AI agent powered by Gemini with access to live tools: weather forecasts, news feeds, stock quotes, Wikipedia lookups, and calculations.\n\n**Two ways to use it:**\n- **Local Chat** \u2014 test directly inside n8n using the built-in chat interface. No Slack needed.\n- **Slack Bot** \u2014 @mention your bot in any Slack channel and it replies in-thread.\n\n**Quick start:**\n1. Connect your Gemini API key (see setup note)\n2. Connect your Slack credential and set your channel ID in the Slack Bot Trigger node\n3. Activate the workflow\n4. Try: *\"What's the weather in Tokyo?\"* or *\"What's AAPL trading at?\"*",
+        "content": "## Gemini AI Agent: Slack + Local Chat\n\nA conversational AI agent powered by Gemini with access to live tools: weather forecasts, news feeds, stock quotes, Wikipedia lookups, and calculations.\n\n**Two ways to use it:**\n- **Local Chat**: test directly inside n8n using the built-in chat interface. No Slack needed.\n- **Slack Bot**: @mention your bot in any Slack channel and it replies in-thread.\n\n**Quick start:**\n1. Connect your Gemini API key (see setup note)\n2. Connect your Slack credential and set your channel ID in the Slack Bot Trigger node\n3. Activate the workflow\n4. Try: *\"What's the weather in Tokyo?\"* or *\"What's AAPL trading at?\"*",
         "height": 460,
         "width": 392
       },
@@ -21,7 +21,7 @@
     },
     {
       "parameters": {
-        "content": "**Test Locally**\nUse the Chat Trigger to test your agent inside n8n \u2014 no Slack required. Click **Open chat** and start asking questions.",
+        "content": "**Test Locally**\nUse the Chat Trigger to test your agent inside n8n: no Slack required. Click **Open chat** and start asking questions.",
         "height": 252,
         "width": 300,
         "color": 7
@@ -69,7 +69,7 @@
     },
     {
       "parameters": {
-        "content": "**Tools**\nEach tool extends what the agent can do:\n- **Get Weather** \u2014 live forecasts via Open-Meteo (free, no API key)\n- **Get News** \u2014 RSS headlines from BBC, TechCrunch, n8n blog, and more (free)\n- **Stock Query** \u2014 real-time quotes via Alpha Vantage (free API key required)\n- **Search Wikipedia** \u2014 general knowledge and factual lookups (free, no API key)\n- **Run Calculation** \u2014 math and unit conversions (free, no API key)\n\nAdd more tools by clicking \u2795 on the agent's Tool input.",
+        "content": "**Tools**\nEach tool extends what the agent can do:\n- **Get Weather**: live forecasts via Open-Meteo (free, no API key)\n- **Get News**: RSS headlines from BBC, TechCrunch, n8n blog, and more (free)\n- **Stock Query**: real-time quotes via Alpha Vantage (free API key required)\n- **Search Wikipedia**: general knowledge and factual lookups (free, no API key)\n- **Run Calculation**: math and unit conversions (free, no API key)\n\nAdd more tools by clicking \u2795 on the agent's Tool input.",
         "height": 404,
         "width": 372,
         "color": 7
@@ -188,7 +188,7 @@
     },
     {
       "parameters": {
-        "content": "**Gemini API Setup**\n\n1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey) and click **Create API key**\n2. Copy the key\n3. Open the **Connect Gemini** node\n4. Click **Select Credential \u2192 Create New**\n5. Paste your API key and save\n\nFree tier: 15 requests/min \u00b7 1M tokens/day \u2014 sufficient for testing and light production use.",
+        "content": "**Gemini API Setup**\n\n1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey) and click **Create API key**\n2. Copy the key\n3. Open the **Connect Gemini** node\n4. Click **Select Credential \u2192 Create New**\n5. Paste your API key and save\n\nFree tier: 15 requests/min \u00b7 1M tokens/day: sufficient for testing and light production use.",
         "height": 508,
         "width": 294,
         "color": 3
@@ -205,7 +205,7 @@
     {
       "parameters": {
         "options": {
-          "systemMessage": "<role>\nYou are a helpful AI assistant. Your job is to answer questions and complete tasks using your available tools. Be conversational, clear, and honest about your limitations.\n</role>\n\n<instructions>\n<goal>\nHelp users get accurate, useful information by selecting the right tool for each request. Present results clearly. If no tool fits, answer from your own knowledge.\n</goal>\n\n<tools>\n- Use Get Weather when asked about weather, temperature, or forecasts for any location\n- Use Get News when asked for news, articles, or updates on any topic\n- Use Alpha Vantage Stock Query when asked for stock prices or market data\n- Use Search Wikipedia for factual lookups, definitions, history, or general knowledge\n- Use Run Calculation for math, unit conversions, or numerical computations\n- Choose the most relevant tool \u2014 do not use a tool if it does not match the request\n</tools>\n\n<guidelines>\n- Keep responses concise and well-formatted\n- When presenting tool results, summarize clearly \u2014 avoid dumping raw data\n- If you cannot answer reliably, say so honestly\n- Do not fabricate information\n</guidelines>\n\n<context>\nCurrent date and time: {{ $now }}\n</context>\n</instructions>"
+          "systemMessage": "<role>\nYou are a helpful AI assistant. Your job is to answer questions and complete tasks using your available tools. Be conversational, clear, and honest about your limitations.\n</role>\n\n<instructions>\n<goal>\nHelp users get accurate, useful information by selecting the right tool for each request. Present results clearly. If no tool fits, answer from your own knowledge.\n</goal>\n\n<tools>\n- Use Get Weather when asked about weather, temperature, or forecasts for any location\n- Use Get News when asked for news, articles, or updates on any topic\n- Use Alpha Vantage Stock Query when asked for stock prices or market data\n- Use Search Wikipedia for factual lookups, definitions, history, or general knowledge\n- Use Run Calculation for math, unit conversions, or numerical computations\n- Choose the most relevant tool: do not use a tool if it does not match the request\n</tools>\n\n<guidelines>\n- Keep responses concise and well-formatted\n- When presenting tool results, summarize clearly: avoid dumping raw data\n- If you cannot answer reliably, say so honestly\n- Do not fabricate information\n</guidelines>\n\n<context>\nCurrent date and time: {{ $now }}\n</context>\n</instructions>"
         }
       },
       "id": "c3c4bb08-84cd-48c8-8057-a656f7dce7a9",

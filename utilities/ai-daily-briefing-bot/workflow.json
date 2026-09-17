@@ -95,7 +95,7 @@
         "options": {
           "summarizationMethodAndPrompts": {
             "values": {
-              "combineMapPrompt": "Extract the key point from this news article in one bullet point. Format: \u2022 Article title \u2014 one sentence takeaway.\n\n{text}\n\nBULLET:",
+              "combineMapPrompt": "Extract the key point from this news article in one bullet point. Format: \u2022 Article title: one sentence takeaway.\n\n{text}\n\nBULLET:",
               "prompt": "You are a morning briefing assistant. Combine these news bullet points into a concise morning briefing. Start with \"Good morning! Here's your daily tech briefing:\" and end with a one-line theme summary.\n\n{text}\n\nBRIEFING:"
             }
           }
@@ -177,7 +177,7 @@
     },
     {
       "parameters": {
-        "content": "## Prerequisites\n\n**Ollama** running locally with model pulled:\n- `qwen2.5:7b` \u2014 runs the summarization\n- Pull with: `ollama pull qwen2.5:7b`\n- Default URL: `http://localhost:11434`\n\n**Slack** credential connected in n8n:\n- Create a Slack App \u2192 Bot Token (xoxb-...)\n- Invite the bot to your target channel before activating",
+        "content": "## Prerequisites\n\n**Ollama** running locally with model pulled:\n- `qwen2.5:7b`: runs the summarization\n- Pull with: `ollama pull qwen2.5:7b`\n- Default URL: `http://localhost:11434`\n\n**Slack** credential connected in n8n:\n- Create a Slack App \u2192 Bot Token (xoxb-...)\n- Invite the bot to your target channel before activating",
         "height": 274,
         "width": 700,
         "color": 4
